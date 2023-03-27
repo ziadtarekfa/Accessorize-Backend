@@ -5,6 +5,7 @@ const express = require("express");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 const Item = require('../Models/Product');
+const Order = require('../Models/order')
 const Cart = require('../Models/Cart');
 const mongodb = require("mongodb");
 const favorites =require("../Models/Favourites");
@@ -54,7 +55,7 @@ const login = async (req, res) => {
             const hahsedpassword = await bcrypt.compare(password, user.password);
             if (hahsedpassword) {
                 const token = createToken(user.email);
-                res.cookie(' jwt', token, { httponly: true, maxAge: maxAge * 1000 });
+                res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
                 res.status(200).json("you are logged in" + token)
             } else {
                 res.status(400).json({ error: " your password is wrong" })
@@ -97,12 +98,11 @@ const searchProduct = async (req, res) => {
 
 
 const addToFavourites = async (req, res) => {
-    let token = req.body.token
-    let email = jwt.verify(token, 'secret')
+    let userEmail = jwt.verify(req.cookies.jwt, 'secret')
     let ID = req.body.productID
-    let favourite = new Favourites({
+    let favourite = new favorites({
         productID: ID,
-        userEmail: email
+        userEmail: userEmail.email
     })
     favourite.save()
         .then((result) => res.status(200).json("Added to favourites"))
@@ -114,7 +114,7 @@ const addToFavourites = async (req, res) => {
 const getTotal = async (req, res) => {
     let IDs = req.body.item
     let total = 0
-    let items = await Product.find({ productID: { $in: IDs } });
+    let items = await Item.find({ productID: { $in: IDs } });
     items.forEach((item) => {
         total += item.productPrice
     })
@@ -124,7 +124,7 @@ const getTotal = async (req, res) => {
 const makeAnOrder = async (req, res) => {
     let ordersCount = await Order.countDocuments({})
     let date = Date.now()
-    let personEmail = jwt.verify(req.cookies.jwt, 'secret')
+    let userEmail = jwt.verify(req.cookies.jwt, 'secret')
     let total = await getTotal(req)
     let order = new Order({
         orderID: ordersCount + 1,
@@ -132,7 +132,7 @@ const makeAnOrder = async (req, res) => {
         shippingAddress: req.body.shippingAddress,
         status: 'Pending',
         total: total,
-        userEmail: personEmail
+        userEmail: userEmail.email
     })
     order.save()
         .then((result) => res.status(200).json("order Saved"))

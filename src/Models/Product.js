@@ -3,11 +3,11 @@ const Schema = mongoose.Schema;
 const {ObjectId} = mongoose.Schema;
 
 const productSchema = new Schema({
-    name: {
+    productName: {
       type: String,
       required: true,
     },
-    price: {
+    productPrice: {
         type: Number,
         required: true,
     },
@@ -16,7 +16,7 @@ const productSchema = new Schema({
         type: String,
         required: true,
     },
-    category:{
+    categoryID:{
         type:String,
         required:true,
     },

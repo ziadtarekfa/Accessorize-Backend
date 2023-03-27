@@ -8,8 +8,8 @@ router.post('/login', login)
 router.get('/logout', logout);
 router.get('/sellers', getSellers);
 router.post('/addProduct',upload.any('images'),addProduct);
-router.get('/getModel',getModel);
-router.get('/getImages',getImages);
+router.get('/getModel',upload.none(),getModel);
+router.get('/getImages',upload.none(),getImages);
 router.post('/deleteproduct',deleteProduct);
 router.post('/updateimage',updateImage);
 router.post('/updatemodel',updateModel);

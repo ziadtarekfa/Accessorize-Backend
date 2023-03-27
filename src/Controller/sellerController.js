@@ -25,7 +25,8 @@ const createToken = (name) => {
 
 const login = async (req, res) => {
     const { email, password } = req.body;
-    const seller = await sellerModel.findOne({ email: email });
+    console.log(req.body)
+    const seller = await Seller.findOne({ email: email });
     if (!seller) {
         return res.status(404).json({ error: "No such seller" });
     } else {
@@ -33,7 +34,7 @@ const login = async (req, res) => {
             const hahsedpassword = await bcrypt.compare(password, seller.password);
             if (hahsedpassword) {
                 const token = createToken(seller.email);
-                res.cookie(' jwt', token, { httponly: true, maxAge: maxAge * 1000 });
+                res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
                 res.status(200).json("you are logged in" + token)
             } else {
                 res.status(400).json({ error: " your password is wrong" })
@@ -54,7 +55,7 @@ const logout = async (req, res) => {
 }
 
 const getSellers = async (req, res) => {
-    const sellers = await sellerModel.find({}).sort({ createdAt: -1 }) //descending order
+    const sellers = await Seller.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(sellers)
 }
 //admin adds seller 
@@ -78,13 +79,13 @@ const addProduct = async (req, res) => {
     try {
         let productsCount = await Product.countDocuments({})
         let { productName, productPrice, categoryID, position, size } = req.body
-        let sellerEmail = jwt.verify(req.cookies.jwtSeller, 'secret')
+        let sellerEmail = jwt.verify(req.cookies.jwt, 'secret')
         const product = await Product.create({
             productID: productsCount + 1,
             productName: productName,
             productPrice: productPrice,
             categoryID: categoryID,
-            sellerEmail: sellerEmail,
+            sellerEmail: sellerEmail.name,
         });
         req.body.productID = product.productID
         const result = await cloudinary.uploader.upload(req.files[0].path, {
@@ -123,13 +124,14 @@ const addProduct = async (req, res) => {
 
 
 const getModel = async (req, res) => {
-    Model.findOne({ productID: req.body.productID })
+    try{
+        Model.findOne({ productID: req.body.productID })
         .then(model => {
             let modelLink = model.modelLink
             let path = fs.createWriteStream("model" + model.productID + ".fbx");
 
-            https.get(modelLink, (res) => {
-                res.pipe(path);
+            https.get(modelLink, (result) => {
+                result.pipe(path);
 
                 // after download completed close filestream
                 path.on("finish", () => {
@@ -140,29 +142,41 @@ const getModel = async (req, res) => {
         })
         .catch(err => {
             res.status(406).json({ error: err.messages })
-        })
+        })    
+    }
+    catch (error){
+        console.log(error);
+        res.status(406).json({ error: error.messages });
+    }
+
 }
 const getImages = async (req, res) => {
-    Images.find({ productID: { $in: req.body.productID } })
+    try{
+        Images.find({ productID: { $in: req.body.productID } })
         .then(images => {
             for (let i = 0; i < images.length; i++) {
                 let imageLink = images[i].imageLink
                 let path = fs.createWriteStream("image" + i + ".png");
-                https.get(imageLink, (res) => {
-                    res.pipe(path);
+                https.get(imageLink, (result) => {
+                    result.pipe(path);
 
                     // after download completed close filestream
                     path.on("finish", () => {
                         path.close();
                     });
                 });
-                console.log("Image downloaded")
             }
             res.status(200).json("Images Downloaded");
         })
         .catch(err => {
             res.status(406).json({ error: err.messages })
         })
+    }
+    catch(error){
+        console.log(error);
+        res.status(406).json({ error: error.messages });
+    }
+
 }
 const updateProduct = (req, res) => {
     Product.findOneAndUpdate(
