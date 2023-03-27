@@ -33,10 +33,10 @@ const signUp = async (req, res) => {
             const token = createToken(user.email);
 
             res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-            res.status(200).json(user)//The HTTP 200 OK success status response code indicates that the request has succeeded
+            res.status(200).json(token)//The HTTP 200 OK success status response code indicates that the request has succeeded
         }
         else {
-            return res.status(404).json({ error: "user already exists with this email" });
+            return res.status(404).json({ error: "User already exists with this email" });
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -55,7 +55,7 @@ const login = async (req, res) => {
             if (hahsedpassword) {
                 const token = createToken(user.email);
                 res.cookie(' jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json("you are logged in" + token)
+                res.status(200).json( token)
             } else {
                 res.status(400).json({ error: " your password is wrong" })
             }
@@ -86,11 +86,11 @@ const getUsers = async (req, res) => {
 const searchProduct = async (req, res) => {
     try {
         const search = req.query.search;
-        const products = await Item.find({ name: { $regex: search, $options: "i" } })
+        const products = await Item.find({ productName: { $regex: search, $options: "i" } })
         res.status(200).json(products);
 
     } catch (error) {
-        res.status(400).json("Search Failed");
+        res.status(400).json({error: error.messages});
     }
 
 }
@@ -169,7 +169,7 @@ const updateUser = (req, res) => {
 const deleteUser = async (req,res)=>{
     
      userModel.deleteOne({ _id: req.body.id })
-     .then(() => res.json({ message: "user Deleted" }))
+     .then(() => res.json({ message: "User deleted" }))
      .catch((err) => res.send(err));
     
     
@@ -177,7 +177,7 @@ const deleteUser = async (req,res)=>{
 
 const deleteFromFavorites = (req,res)=>{
   favorites.deleteOne({productID:req.body.productID})
-  .then(() => res.json({ message: "product Deleted from favorites" }))
+  .then(() => res.json({ message: "Product removed from favorites" }))
      .catch((err) => res.send(err));
 }
 

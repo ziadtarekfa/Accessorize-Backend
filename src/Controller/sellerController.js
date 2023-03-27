@@ -1,5 +1,5 @@
 // #Task route solution
-const Seller = require('../Models/seller');
+const sellerModel = require('../Models/seller');
 const { default: mongoose } = require('mongoose');
 const Admin = require('../Models/Admin');
 const Model = require('../Models/models')
@@ -34,7 +34,7 @@ const login = async (req, res) => {
             if (hahsedpassword) {
                 const token = createToken(seller.email);
                 res.cookie(' jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json("you are logged in" + token)
+                res.status(200).json( token)
             } else {
                 res.status(400).json({ error: " your password is wrong" })
             }
@@ -165,13 +165,13 @@ const getImages = async (req, res) => {
         })
 }
 const updateProduct = (req, res) => {
-    Product.findOneAndUpdate(
+     Product.findOneAndUpdate(
         { productID: req.body.id },
         {
             $set: {
-                name: req.body.name,
-                price: req.body.price,
-                category: req.body.category,
+                productName: req.body.name,
+                productPrice: req.body.price,
+                categoryID: req.body.category,
 
             },
         },
