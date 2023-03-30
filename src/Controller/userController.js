@@ -9,6 +9,7 @@ const Order = require('../Models/order')
 const Cart = require('../Models/Cart');
 const mongodb = require("mongodb");
 const favorites =require("../Models/Favourites");
+const Product = require('../Models/Product');
 
 // create json web token
 const maxAge = 3 * 24 * 60 * 60;
@@ -139,6 +140,16 @@ const makeAnOrder = async (req, res) => {
         .catch((err) => res.status(400).json({ error: err }))
 }
 
+const getProducts = async (req, res) => {
+    const products = await Product.find({}).sort({ createdAt: -1 }) //descending order
+    res.status(200).json(products)
+}
+
+const getCategorizedProducts = async (req, res) => {
+    const products = await Product.find({categoryID: req.body.categoryID}).sort({ createdAt: -1 }) //descending order
+    res.status(200).json(products)
+}
+
 const updateUser = (req, res) => {
     userModel.findOneAndUpdate(
         { email: req.body.email },
@@ -181,5 +192,5 @@ const deleteFromFavorites = (req,res)=>{
      .catch((err) => res.send(err));
 }
 
-module.exports = { signUp, logout, getUsers, login, searchProduct, makeAnOrder,
-     addToFavourites, updateUser ,deleteUser,deleteFromFavorites};
+module.exports = { signUp, logout, getUsers, login, searchProduct, makeAnOrder, getProducts,
+     addToFavourites, updateUser ,deleteUser,deleteFromFavorites, getCategorizedProducts};

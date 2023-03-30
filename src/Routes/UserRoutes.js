@@ -1,5 +1,5 @@
 const express = require("express");
-const { signUp, logout, getUsers, login,searchProduct,addToFavourites,makeAnOrder,updateUser,deleteUser,deleteFromFavorites }=require('../Controller/userController');
+const { signUp, logout, getUsers, login,searchProduct,addToFavourites,makeAnOrder,updateUser,deleteUser,deleteFromFavorites, getProducts, getCategorizedProducts }=require('../Controller/userController');
 //const {addItemToCart,getItemsInCart} = require('../Controller/cartController')
 const router = express.Router();
 
@@ -15,6 +15,8 @@ router.get('/searchproduct',searchProduct);
 
 router.post('/favourites',addToFavourites);
 router.post('/order',makeAnOrder);
+router.get('/products',getProducts);
+router.get('/categorizedProducts',getCategorizedProducts);
 router.post('/updateuser',updateUser);
 
 router.post('/deleteuser',deleteUser);
