@@ -1,11 +1,12 @@
 // #Task route solution
 const adminModel = require('../Models/Admin');
 const Seller = require('../Models/seller');
-const userModel = require('../Models/User');
+const userModel = require('../Models/Admin');
 const { default: mongoose } = require('mongoose');
 const express = require("express");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
+const sellerModel = require('../Models/seller');
 
 
 // create json web token
@@ -27,7 +28,7 @@ const login = async (req, res) => {
             if (hahsedpassword) {
                 const token = createToken(admin.email);
                 res.cookie(' jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json("you are logged in")
+                res.status(200).json(token)
             } else {
                 res.status(400).json({ error: " your password is wrong" })
             }
@@ -99,7 +100,7 @@ const addSeller = async (req, res) => {
             const seller = await Seller.create({ name: name, email: email, password: hashedPassword });
             const token = createToken(seller.email);
     
-            res.status(200).json(seller)//The HTTP 200 OK success status response code indicates that the request has succeeded
+            res.status(200).json(token)//The HTTP 200 OK success status response code indicates that the request has succeeded
         } catch (error) {
             res.status(400).json({ error:"seller already exists with this email" })
         }
@@ -108,18 +109,18 @@ const addSeller = async (req, res) => {
 
 
 
-// const signUp = async (req, res) => {
-//     const { name, email, password } = req.body;
-//     try {
-//         const salt = await bcrypt.genSalt();
-//         const hashedPassword = await bcrypt.hash(password, salt);
-//         const admin = await adminModel.create({ name: name, email: email, password: hashedPassword });
-//         const token = createToken(admin.name);
+const signUp = async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const admin = await adminModel.create({ name: name, email: email, password: hashedPassword });
+        const token = createToken(admin.name);
 
-//         res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-//         res.status(200).json(admin)//The HTTP 200 OK success status response code indicates that the request has succeeded
-//     } catch (error) {
-//         res.status(400).json({ error: error.message })
-//     }
-// }
-module.exports = { login, logout, getAdmins ,addSeller ,getSellers,getUsers,deleteUser,deleteAdmin,numberOfUsers,numberOfAdmins};
+        res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
+        res.status(200).json(admin)//The HTTP 200 OK success status response code indicates that the request has succeeded
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+module.exports = { login, logout, getAdmins ,addSeller,signUp,getSellers,getUsers,deleteUser,deleteAdmin,numberOfUsers,numberOfAdmins };
