@@ -21,6 +21,10 @@ lastName:{
     type:String,
     required:true
 },
+gender:{
+    type:String,
+    required:true
+},
 phoneNumber:{
     type:String,
     required:true

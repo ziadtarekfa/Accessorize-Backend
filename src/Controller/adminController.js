@@ -1,12 +1,13 @@
 // #Task route solution
 const adminModel = require('../Models/Admin');
 const Seller = require('../Models/seller');
-const userModel = require('../Models/Admin');
+const userModel = require('../Models/User');
 const { default: mongoose } = require('mongoose');
 const express = require("express");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 const sellerModel = require('../Models/seller');
+const Item = require('../Models/Product');
 
 
 // create json web token
@@ -17,6 +18,20 @@ const createToken = (name) => {
     });
 };
 
+const signUp = async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const admin = await adminModel.create({ name: name, email: email, password: hashedPassword });
+        const token = createToken(admin.name);
+
+        res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
+        res.status(200).json(admin)//The HTTP 200 OK success status response code indicates that the request has succeeded
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
 const login = async (req, res) => {
     const { email, password } = req.body;
     const admin = await adminModel.findOne({ email: email });
@@ -63,20 +78,74 @@ const getUsers = async (req, res) => {
 }
 
 const deleteUser = (req,res)=>{
-    userModel.deleteOne({email: req.body.email})
-    .then(() => res.status(200).json({ message: "User Deleted" }))
-    .catch((err) => res.status(400).send(err));
+    // userModel.findOne({email: req.body.email})
+    // .then((user) => {if(user) res.status(200).json({ message: "User Deleted" })})
+    // .catch((err) => res.status(400).send(err));
+
+    // userModel.findOne({email: req.body.email},function(err,result){
+    //     if(err){
+    //         res.status(400).send(err)
+    //     }
+    //     else if(result){
+    //         res.status(200).json({ message: "User Deleted" })
+    //     }
+    //     else{
+    //         res.status(200).json({message:"User not found"})
+    //     }   
+    // })
+    if(req.body.email==null){
+        res.status(200).json("Please enter the user's email")
+    }
+    else{
+        userModel.findOneAndDelete({email:req.body.email})
+        .then((user) => {
+            if(user) res.status(200).json("User deleted")
+            else res.status(200).json("User not found")
+        })
+        .catch((err) => res.status(400).send(err));       
+    }
+
+}
+const deleteSeller = (req,res)=>{
+    if(req.body.email==null){
+        res.status(200).json("Please enter the seller's email")
+    }
+    else{
+        sellerModel.findOneAndDelete({email:req.body.email})
+        .then((seller) => {
+            if(seller) res.status(200).json("Seller deleted")
+            else res.status(200).json("Seller not found")
+        })
+        .catch((err) => res.status(400).send(err));       
+    }
 }
 const deleteAdmin = (req,res)=>{
-    adminModel.deleteOne({email: req.body.email})
-    .then(() => res.status(200).json({ message: "Admin Deleted" }))
-    .catch((err) => res.status(400).send(err));
+    if(req.body.email==null){
+        res.status(200).json("Please enter the admin's email")
+    }
+    else{
+        adminModel.findOneAndDelete({email:req.body.email})
+        .then((admin) => {
+            if(admin) res.status(200).json("Admin deleted")
+            else res.status(200).json("Admin not found")
+        })
+        .catch((err) => res.status(400).send(err));       
+    }
 }
 
 const numberOfUsers = async (req,res)=>{
     try{
         let usersCount = await userModel.countDocuments({})
         res.status(200).json({usersCount})
+    }
+    catch (error) {
+        res.status(400).json(err)
+    }
+}
+const numberOfSellers = async (req,res)=>{
+    try{
+        let sellersCount = await sellerModel.countDocuments({})
+        res.status(200).json({sellersCount})
     }
     catch (error) {
         res.status(400).json(err)
@@ -91,8 +160,8 @@ const numberOfAdmins = async (req,res)=>{
         res.status(400).json(err)
     }
 }
-const addSeller = async (req, res) => {
 
+const addSeller = async (req, res) => {
         try {
             const { name, email, password } = req.body;
             const salt = await bcrypt.genSalt();
@@ -107,20 +176,72 @@ const addSeller = async (req, res) => {
     }
 
 
+const updateSeller = (req, res) => {
+    Seller.findOneAndUpdate(
+       { email: req.body.email },
+       {
+           $set: {
+               name: req.body.name,
+               email: req.body.newEmail,
+               password: req.body.password,
+           },
+       },
+       { new: true },
+       (err, doc) => {
+           if (err) {
+               res.status(406).json({ error: err.messages });
+           }
+           else
+               res.status(200).json(doc);
+       }
 
+   );
+};
+const updateUser = (req, res) => {
+    userModel.findOneAndUpdate(
+       { email: req.body.email },
+       {
+           $set: {
+               name: req.body.name,
+               email: req.body.newEmail,
+               password: req.body.password,
+               firstName:req.body.firstName,
+               lastName:req.body.lastName,
+               gender:req.body.gender,
+               phoneNumber:req.body.phoneNumber,
+               birthdate:req.body.birthdate,
+               city:req.body.city,
+               zipCode:req.body.zipCode,
+               streetAddress:req.body.streetAddress,
+               floorNum:req.body.floorNum,
+               aptNum:req.body.aptNum,
+           },
+       },
+       { new: true },
+       (err, doc) => {
+           if (err) {
+               res.status(406).json({ error: err.messages });
+           }
+           else
+               res.status(200).json(doc);
+       }
 
-const signUp = async (req, res) => {
-    const { name, email, password } = req.body;
+   );
+};
+const recentUsers = async (req, res) => {
     try {
-        const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(password, salt);
-        const admin = await adminModel.create({ name: name, email: email, password: hashedPassword });
-        const token = createToken(admin.name);
-
-        res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-        res.status(200).json(admin)//The HTTP 200 OK success status response code indicates that the request has succeeded
+        let users = await userModel.find({ createdAt: { $gte: new Date((new Date().getTime() - (2 * 24 * 60 * 60 * 1000))) } });
+        res.status(200).json(users.length)
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
 }
-module.exports = { login, logout, getAdmins ,addSeller,signUp,getSellers,getUsers,deleteUser,deleteAdmin,numberOfUsers,numberOfAdmins };
+const recentSellers = async (req, res) => {
+    try {
+        let sellers = await Seller.find({ createdAt: { $gte: new Date((new Date().getTime() - (2 * 24 * 60 * 60 * 1000))) } });
+        res.status(200).json(sellers.length)
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+}
+module.exports = { login, logout, getAdmins ,addSeller,signUp,recentUsers,recentSellers,getSellers,getUsers,deleteUser,deleteSeller,deleteAdmin,numberOfUsers,numberOfAdmins,numberOfSellers,updateSeller,updateUser };

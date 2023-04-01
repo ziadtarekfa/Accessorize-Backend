@@ -1,7 +1,6 @@
 // #Task route solution
 const sellerModel = require('../Models/seller');
 const { default: mongoose } = require('mongoose');
-const Admin = require('../Models/Admin');
 const Model = require('../Models/models')
 const Images = require('../Models/images')
 const Product = require('../Models/Product')
@@ -26,7 +25,7 @@ const createToken = (name) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
     console.log(req.body)
-    const seller = await Seller.findOne({ email: email });
+    const seller = await sellerModel.findOne({ email: email });
     if (!seller) {
         return res.status(404).json({ error: "No such seller" });
     } else {
@@ -55,7 +54,7 @@ const logout = async (req, res) => {
 }
 
 const getSellers = async (req, res) => {
-    const sellers = await Seller.find({}).sort({ createdAt: -1 }) //descending order
+    const sellers = await sellerModel.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(sellers)
 }
 //admin adds seller 

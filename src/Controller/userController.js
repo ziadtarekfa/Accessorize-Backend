@@ -21,7 +21,7 @@ const createToken = (email) => {
 
 
 const signUp = async (req, res) => {
-    let { email, firstName, lastName, password, phoneNumber, birthDate, city, zipCode, streetAddress, floorNum, aptNum } = req.body
+    let { email, firstName, lastName,gender, password, phoneNumber, birthDate, city, zipCode, streetAddress, floorNum, aptNum } = req.body
     try {
         const user = await userModel.findOne({ email: email });
         if (!user) {
@@ -29,7 +29,7 @@ const signUp = async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, salt);
             const user = await userModel.create({
                 email: email, password: hashedPassword, firstName: firstName,
-                lastName: lastName, phoneNumber: phoneNumber, birthDate: birthDate, city: city, zipCode: zipCode, streetAddress: streetAddress
+                lastName: lastName, gender:gender,phoneNumber: phoneNumber, birthDate: birthDate, city: city, zipCode: zipCode, streetAddress: streetAddress
                 , floorNum: floorNum, aptNum: aptNum
             });
             const token = createToken(user.email);
