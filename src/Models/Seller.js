@@ -1,37 +1,6 @@
 const mongoose = require('mongoose');
+const addressSchema = require('../Models/Address');
 const Schema = mongoose.Schema;
-const { ObjectId } = mongoose.Schema;
-const addressSchema = new Schema({
-  country: {
-    type: String,
-    required: true
-  },
-  state: {
-    type: String,
-    required: true
-  },
-  city: {
-    type: String,
-    required: true
-  },
-  street: {
-    type: String,
-    required: true
-  },
-  floorNum: {
-    type: Number,
-    required: true
-  },
-  aptNum: {
-    type: Number,
-    required: true
-  },
-  zipCode: {
-    type: Number,
-    required: true
-  },
-
-}, { _id: false });
 
 const sellerSchema = new Schema({
   firstName: {
@@ -47,7 +16,7 @@ const sellerSchema = new Schema({
     required: true
   },
   birthDate: {
-    type: Date,
+    type: String,
     required: true
   },
   email: {
