@@ -77,7 +77,7 @@ const getUsers = async (req, res) => {
     res.status(200).json(users)
 }
 
-const deleteUser = (req,res)=>{
+const deleteUser = (req, res) => {
     // userModel.findOne({email: req.body.email})
     // .then((user) => {if(user) res.status(200).json({ message: "User Deleted" })})
     // .catch((err) => res.status(400).send(err));
@@ -93,68 +93,68 @@ const deleteUser = (req,res)=>{
     //         res.status(200).json({message:"User not found"})
     //     }   
     // })
-    if(req.body.email==null){
+    if (req.body.email == null) {
         res.status(200).json("Please enter the user's email")
     }
-    else{
-        userModel.findOneAndDelete({email:req.body.email})
-        .then((user) => {
-            if(user) res.status(200).json("User deleted")
-            else res.status(200).json("User not found")
-        })
-        .catch((err) => res.status(400).send(err));       
+    else {
+        userModel.findOneAndDelete({ email: req.body.email })
+            .then((user) => {
+                if (user) res.status(200).json("User deleted")
+                else res.status(200).json("User not found")
+            })
+            .catch((err) => res.status(400).send(err));
     }
 
 }
-const deleteSeller = (req,res)=>{
-    if(req.body.email==null){
+const deleteSeller = (req, res) => {
+    if (req.body.email == null) {
         res.status(200).json("Please enter the seller's email")
     }
-    else{
-        sellerModel.findOneAndDelete({email:req.body.email})
-        .then((seller) => {
-            if(seller) res.status(200).json("Seller deleted")
-            else res.status(200).json("Seller not found")
-        })
-        .catch((err) => res.status(400).send(err));       
+    else {
+        sellerModel.findOneAndDelete({ email: req.body.email })
+            .then((seller) => {
+                if (seller) res.status(200).json("Seller deleted")
+                else res.status(200).json("Seller not found")
+            })
+            .catch((err) => res.status(400).send(err));
     }
 }
-const deleteAdmin = (req,res)=>{
-    if(req.body.email==null){
+const deleteAdmin = (req, res) => {
+    if (req.body.email == null) {
         res.status(200).json("Please enter the admin's email")
     }
-    else{
-        adminModel.findOneAndDelete({email:req.body.email})
-        .then((admin) => {
-            if(admin) res.status(200).json("Admin deleted")
-            else res.status(200).json("Admin not found")
-        })
-        .catch((err) => res.status(400).send(err));       
+    else {
+        adminModel.findOneAndDelete({ email: req.body.email })
+            .then((admin) => {
+                if (admin) res.status(200).json("Admin deleted")
+                else res.status(200).json("Admin not found")
+            })
+            .catch((err) => res.status(400).send(err));
     }
 }
 
-const numberOfUsers = async (req,res)=>{
-    try{
+const numberOfUsers = async (req, res) => {
+    try {
         let usersCount = await userModel.countDocuments({})
-        res.status(200).json({usersCount})
+        res.status(200).json({ usersCount })
     }
     catch (error) {
         res.status(400).json(err)
     }
 }
-const numberOfSellers = async (req,res)=>{
-    try{
+const numberOfSellers = async (req, res) => {
+    try {
         let sellersCount = await sellerModel.countDocuments({})
-        res.status(200).json({sellersCount})
+        res.status(200).json({ sellersCount })
     }
     catch (error) {
         res.status(400).json(err)
     }
 }
-const numberOfAdmins = async (req,res)=>{
-    try{
+const numberOfAdmins = async (req, res) => {
+    try {
         let adminsCount = await adminModel.countDocuments({})
-        res.status(200).json({adminsCount})
+        res.status(200).json({ adminsCount })
     }
     catch (error) {
         res.status(400).json(err)
@@ -162,71 +162,70 @@ const numberOfAdmins = async (req,res)=>{
 }
 
 const addSeller = async (req, res) => {
-        try {
-            const { name, email, password } = req.body;
-            const salt = await bcrypt.genSalt();
-            const hashedPassword = await bcrypt.hash(password, salt);
-            const seller = await Seller.create({ name: name, email: email, password: hashedPassword });
-            const token = createToken(seller.email);
-    
-            res.status(200).json(token)//The HTTP 200 OK success status response code indicates that the request has succeeded
-        } catch (error) {
-            res.status(400).json({ error:"seller already exists with this email" })
-        }
+    try {
+        const sellerEntered = req.body;
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(sellerEntered.password, salt);
+        sellerEntered.password = hashedPassword;
+        const seller = await Seller.create(sellerEntered);
+        const token = createToken(seller.email);
+        res.status(200).json(token);
+    } catch (err) {
+        res.status(400).json(err.message);
     }
-
+}
 
 const updateSeller = (req, res) => {
     Seller.findOneAndUpdate(
-       { email: req.body.email },
-       {
-           $set: {
-               name: req.body.name,
-               email: req.body.newEmail,
-               password: req.body.password,
-           },
-       },
-       { new: true },
-       (err, doc) => {
-           if (err) {
-               res.status(406).json({ error: err.messages });
-           }
-           else
-               res.status(200).json(doc);
-       }
+        { email: req.body.email },
+        {
+            $set: {
+                name: req.body.name,
+                email: req.body.newEmail,
+                password: req.body.password,
+            },
+        },
+        { new: true },
+        (err, doc) => {
+            if (err) {
+                res.status(406).json({ error: err.messages });
+            }
+            else
+                res.status(200).json(doc);
+        }
 
-   );
+    );
 };
 const updateUser = (req, res) => {
     userModel.findOneAndUpdate(
-       { email: req.body.email },
-       {
-           $set: {
-               name: req.body.name,
-               email: req.body.newEmail,
-               password: req.body.password,
-               firstName:req.body.firstName,
-               lastName:req.body.lastName,
-               gender:req.body.gender,
-               phoneNumber:req.body.phoneNumber,
-               birthdate:req.body.birthdate,
-               city:req.body.city,
-               zipCode:req.body.zipCode,
-               streetAddress:req.body.streetAddress,
-               floorNum:req.body.floorNum,
-               aptNum:req.body.aptNum,
-           },
-       },
-       { new: true },
-       (err, doc) => {
-           if (err) {
-               res.status(406).json({ error: err.messages });
-           }
-           else
-               res.status(200).json(doc);
-       }
+        { email: req.body.email },
+        {
+            $set: {
+                name: req.body.name,
+                email: req.body.newEmail,
+                password: req.body.password,
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                gender: req.body.gender,
+                phoneNumber: req.body.phoneNumber,
+                birthdate: req.body.birthdate,
+                city: req.body.city,
+                zipCode: req.body.zipCode,
+                streetAddress: req.body.streetAddress,
+                floorNum: req.body.floorNum,
+                aptNum: req.body.aptNum,
+            },
+        },
+        { new: true },
+        (err, doc) => {
+            if (err) {
+                res.status(406).json({ error: err.messages });
+            }
+            else
+                res.status(200).json(doc);
+        }
 
-   );
+    );
 };
 const recentUsers = async (req, res) => {
     try {
@@ -244,4 +243,4 @@ const recentSellers = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
-module.exports = { login, logout, getAdmins ,addSeller,signUp,recentUsers,recentSellers,getSellers,getUsers,deleteUser,deleteSeller,deleteAdmin,numberOfUsers,numberOfAdmins,numberOfSellers,updateSeller,updateUser };
+module.exports = { login, logout, getAdmins, addSeller, signUp, recentUsers, recentSellers, getSellers, getUsers, deleteUser, deleteSeller, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, updateSeller, updateUser };
