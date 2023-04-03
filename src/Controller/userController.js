@@ -8,7 +8,7 @@ const Item = require('../Models/Product');
 const Order = require('../Models/order')
 const Cart = require('../Models/Cart');
 const mongodb = require("mongodb");
-const favorites =require("../Models/Favourites");
+const favorites = require("../Models/Favourites");
 const Product = require('../Models/Product');
 
 // create json web token
@@ -21,27 +21,18 @@ const createToken = (email) => {
 
 
 const signUp = async (req, res) => {
-    let { email, firstName, lastName,gender, password, phoneNumber, birthDate, city, zipCode, streetAddress, floorNum, aptNum } = req.body
     try {
-        const user = await userModel.findOne({ email: email });
-        if (!user) {
-            const salt = await bcrypt.genSalt();
-            const hashedPassword = await bcrypt.hash(password, salt);
-            const user = await userModel.create({
-                email: email, password: hashedPassword, firstName: firstName,
-                lastName: lastName, gender:gender,phoneNumber: phoneNumber, birthDate: birthDate, city: city, zipCode: zipCode, streetAddress: streetAddress
-                , floorNum: floorNum, aptNum: aptNum
-            });
-            const token = createToken(user.email);
+        const userEntered = req.body;
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(userEntered.password, salt);
+        userEntered.password = hashedPassword;
+        const user = await userModel.create(userEntered);
+        const token = createToken(user.email);
+        res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
+        res.status(200).json(token)
 
-            res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-            res.status(200).json(token)//The HTTP 200 OK success status response code indicates that the request has succeeded
-        }
-        else {
-            return res.status(404).json({ error: "User already exists with this email" });
-        }
-    } catch (error) {
-        res.status(400).json({ error: error.message })
+    } catch (err) {
+        res.status(400).json(err.message);
     }
 }
 
@@ -57,7 +48,7 @@ const login = async (req, res) => {
             if (hahsedpassword) {
                 const token = createToken(user.email);
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json( token)
+                res.status(200).json(token)
             } else {
                 res.status(400).json({ error: " your password is wrong" })
             }
@@ -92,7 +83,7 @@ const searchProduct = async (req, res) => {
         res.status(200).json(products);
 
     } catch (error) {
-        res.status(400).json({error: error.messages});
+        res.status(400).json({ error: error.messages });
     }
 
 }
@@ -146,7 +137,7 @@ const getProducts = async (req, res) => {
 }
 
 const getCategorizedProducts = async (req, res) => {
-    const products = await Product.find({categoryID: req.body.categoryID}).sort({ createdAt: -1 }) //descending order
+    const products = await Product.find({ categoryID: req.body.categoryID }).sort({ createdAt: -1 }) //descending order
     res.status(200).json(products)
 }
 
@@ -177,20 +168,22 @@ const updateUser = (req, res) => {
 
     );
 };
-const deleteUser = async (req,res)=>{
-    
-     userModel.deleteOne({ _id: req.body.id })
-     .then(() => res.json({ message: "User deleted" }))
-     .catch((err) => res.send(err));
-    
-    
+const deleteUser = async (req, res) => {
+
+    userModel.deleteOne({ _id: req.body.id })
+        .then(() => res.json({ message: "User deleted" }))
+        .catch((err) => res.send(err));
+
+
 };
 
-const deleteFromFavorites = (req,res)=>{
-  favorites.deleteOne({productID:req.body.productID})
-  .then(() => res.json({ message: "Product removed from favorites" }))
-     .catch((err) => res.send(err));
+const deleteFromFavorites = (req, res) => {
+    favorites.deleteOne({ productID: req.body.productID })
+        .then(() => res.json({ message: "Product removed from favorites" }))
+        .catch((err) => res.send(err));
 }
 
-module.exports = { signUp, logout, getUsers, login, searchProduct, makeAnOrder, getProducts,
-     addToFavourites, updateUser ,deleteUser,deleteFromFavorites, getCategorizedProducts};
+module.exports = {
+    signUp, logout, getUsers, login, searchProduct, makeAnOrder, getProducts,
+    addToFavourites, updateUser, deleteUser, deleteFromFavorites, getCategorizedProducts
+};
