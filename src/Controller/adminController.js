@@ -72,12 +72,33 @@ const getSellers = async (req, res) => {
     res.status(200).json(sellers)
 }
 
+const getSellerById = async (req, res) => {
+    let Id = req.body.Id
+    const seller = await Seller.find({_id:Id }) //descending order
+    res.status(200).json(seller)
+}
+
 const getUsers = async (req, res) => {
     const users = await userModel.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(users)
 }
 
-const deleteUser = (req, res) => {
+const getUserById = async (req, res) => {
+    try{
+        let Id = req.body.Id
+        let user = await userModel.findOne({_id:Id }) //descending order
+        if(!user){
+            res.status(200).json("User not found.")
+        }
+        res.status(200).json(user)
+    }
+    catch(error){
+        res.status(400).json({error:error.messages})
+    }
+
+}
+
+const deleteUser = (req,res)=>{
     // userModel.findOne({email: req.body.email})
     // .then((user) => {if(user) res.status(200).json({ message: "User Deleted" })})
     // .catch((err) => res.status(400).send(err));
@@ -254,4 +275,4 @@ const recentSellers = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
-module.exports = { login, logout, getAdmins, addSeller, signUp, recentUsers, recentSellers, getSellers, getUsers, deleteUser, deleteSeller, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, updateSeller, updateUser };
+module.exports = { login, logout, getAdmins ,addSeller,signUp,recentUsers,recentSellers,getSellers,getSellerById,getUsers,getUserById,deleteUser,deleteSeller,deleteAdmin,numberOfUsers,numberOfAdmins,numberOfSellers,updateSeller,updateUser };
