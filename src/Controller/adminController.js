@@ -100,21 +100,6 @@ const getUserById = async (req, res) => {
 }
 
 const deleteUser = (req, res) => {
-    // userModel.findOne({email: req.body.email})
-    // .then((user) => {if(user) res.status(200).json({ message: "User Deleted" })})
-    // .catch((err) => res.status(400).send(err));
-
-    // userModel.findOne({email: req.body.email},function(err,result){
-    //     if(err){
-    //         res.status(400).send(err)
-    //     }
-    //     else if(result){
-    //         res.status(200).json({ message: "User Deleted" })
-    //     }
-    //     else{
-    //         res.status(200).json({message:"User not found"})
-    //     }   
-    // })
     if (req.body.email == null) {
         res.status(200).json("Please enter the user's email")
     }
@@ -197,68 +182,25 @@ const addSeller = async (req, res) => {
     }
 }
 
-const updateSeller = (req, res) => {
-    Seller.findOneAndUpdate(
-        { email: req.body.email },
-        {
-            $set: {
-                firstName: req.body.firstName,
-                lastName: req.body.lastName,
-                gender: req.body.gender,
-                birthdate: req.body.birthdate,
-                email: req.body.newEmail,
-                password: req.body.password,
-                phoneNumber: req.body.phoneNumber,
-                country: req.body.address.country,
-                state: req.body.address.state,
-                city: req.body.address.city,
-                street: req.body.address.street,
-                floorNum: req.body.address.floorNum,
-                aptNum: req.body.address.aptNum,
-                zipCode: req.body.address.zipCode
-            },
-        },
-        { new: true },
-        (err, doc) => {
-            if (err) {
-                res.status(406).json({ error: err.messages });
-            }
-            else
-                res.status(200).json(doc);
-        }
+const updateSeller = async (req, res) => {
+    try {
+        const id = req.body._id;
+        const result = await sellerModel.findOneAndReplace({ _id: id }, req.body, { new: true });
+        res.status(200).json(result);
 
-    );
+    } catch (err) {
+        res.status(400).send({ err: "Seller Not Found" });
+    }
 };
-const updateUser = (req, res) => {
-    userModel.findOneAndUpdate(
-        { email: req.body.email },
-        {
-            $set: {
-                email: req.body.newEmail,
-                password: req.body.password,
-                firstName: req.body.firstName,
-                lastName: req.body.lastName,
-                gender: req.body.gender,
-                phoneNumber: req.body.phoneNumber,
-                country: req.body.address.country,
-                state: req.body.address.state,
-                city: req.body.address.city,
-                street: req.body.address.street,
-                floorNum: req.body.address.floorNum,
-                aptNum: req.body.address.aptNum,
-                zipCode: req.body.address.zipCode
-            },
-        },
-        { new: true },
-        (err, doc) => {
-            if (err) {
-                res.status(406).json({ error: err.messages });
-            }
-            else
-                res.status(200).json(doc);
-        }
+const updateUser = async (req, res) => {
+    try {
+        const id = req.body._id;
+        const result = await userModel.findOneAndReplace({ _id: id }, req.body, { new: true });
+        res.status(200).json(result);
 
-    );
+    } catch (err) {
+        res.status(400).send({ err: "User Not Found" });
+    }
 };
 const recentUsers = async (req, res) => {
     try {
