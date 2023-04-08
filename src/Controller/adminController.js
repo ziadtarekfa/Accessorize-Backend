@@ -73,32 +73,33 @@ const getSellers = async (req, res) => {
 }
 
 const getSellerById = async (req, res) => {
-    let Id = req.body.Id
-    const seller = await Seller.find({_id:Id }) //descending order
-    res.status(200).json(seller)
+    try {
+        const id = req.params['id'];
+        const seller = await Seller.findOne({ _id: id }) //descending order
+        res.status(200).json(seller)
+    } catch (err) {
+        res.status(400).json({ err: "Seller Not Found" });
+    }
+
 }
 
-const getUsers = async (req, res) => {
+const getUsers = async (_req, res) => {
     const users = await userModel.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(users)
 }
 
 const getUserById = async (req, res) => {
-    try{
-        let Id = req.body.Id
-        let user = await userModel.findOne({_id:Id }) //descending order
-        if(!user){
-            res.status(200).json("User not found.")
-        }
+    try {
+        const id = req.params['id'];
+        const user = await userModel.findOne({ _id: id }) //descending order
         res.status(200).json(user)
     }
-    catch(error){
-        res.status(400).json({error:error.messages})
+    catch (error) {
+        res.status(400).json({ err: "User Not Found" });
     }
-
 }
 
-const deleteUser = (req,res)=>{
+const deleteUser = (req, res) => {
     // userModel.findOne({email: req.body.email})
     // .then((user) => {if(user) res.status(200).json({ message: "User Deleted" })})
     // .catch((err) => res.status(400).send(err));
@@ -214,7 +215,7 @@ const updateSeller = (req, res) => {
                 street: req.body.address.street,
                 floorNum: req.body.address.floorNum,
                 aptNum: req.body.address.aptNum,
-                zipCode: req.body.address.zipCode  
+                zipCode: req.body.address.zipCode
             },
         },
         { new: true },
@@ -245,7 +246,7 @@ const updateUser = (req, res) => {
                 street: req.body.address.street,
                 floorNum: req.body.address.floorNum,
                 aptNum: req.body.address.aptNum,
-                zipCode: req.body.address.zipCode                
+                zipCode: req.body.address.zipCode
             },
         },
         { new: true },
@@ -275,4 +276,4 @@ const recentSellers = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
-module.exports = { login, logout, getAdmins ,addSeller,signUp,recentUsers,recentSellers,getSellers,getSellerById,getUsers,getUserById,deleteUser,deleteSeller,deleteAdmin,numberOfUsers,numberOfAdmins,numberOfSellers,updateSeller,updateUser };
+module.exports = { login, logout, getAdmins, addSeller, signUp, recentUsers, recentSellers, getSellers, getSellerById, getUsers, getUserById, deleteUser, deleteSeller, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, updateSeller, updateUser };
