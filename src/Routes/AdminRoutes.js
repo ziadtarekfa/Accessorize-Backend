@@ -1,10 +1,11 @@
 const express = require("express");
-const { login, logout, getAdmins, addSeller, signUp, getSellers, getUsers, deleteUser, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, deleteSeller, updateSeller, updateUser, recentUsers, recentSellers, getSellerById, getUserById } = require('../Controller/adminController')
+const { login, logout, getAdmins, addSeller, signUp, getSellers, getUsers, deleteUser, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, deleteSeller, updateSeller, updateUser, recentUsers, recentSellers, getSellerById, getUserById, isLoggedIn } = require('../Controller/adminController')
 const router = express.Router();
 
 
 router.post('/login', login)
 router.post('/signup', signUp)
+router.get('/isLoggedIn', isLoggedIn);
 
 router.get('/logout', logout);
 router.get('/admins', getAdmins);

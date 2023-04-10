@@ -32,7 +32,7 @@ const AdminRoutes = require('./Routes/AdminRoutes');
 
 //cors
 const corsOptions = {
-  origin: '*',
+  origin: 'http://localhost:3000',
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -47,11 +47,11 @@ mongoose.connect(MongoURI)
     })
   })
   .catch(err => console.log(err));
-
+app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 

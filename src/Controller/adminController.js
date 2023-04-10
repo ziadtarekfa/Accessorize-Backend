@@ -32,6 +32,26 @@ const signUp = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
+const isLoggedIn = (req, res) => {
+    try {
+        console.log(req.cookies)
+        if (!req.cookies.jwt) {
+            res.status(401).send({ err: "You are not logged in" })
+        }
+        else {
+            jwt.verify(req.cookies.jwt, 'secret', function (err, decoded) {
+                if (err) {
+                    res.status(401).send({ err: err.message });
+                }
+                else {
+                    res.status(200).send("Successfull");
+                }
+            })
+        }
+    } catch (err) {
+        res.send(err);
+    }
+}
 const login = async (req, res) => {
     const { email, password } = req.body;
     const admin = await adminModel.findOne({ email: email });
@@ -42,10 +62,10 @@ const login = async (req, res) => {
             const hahsedpassword = await bcrypt.compare(password, admin.password);
             if (hahsedpassword) {
                 const token = createToken(admin.email);
-                res.cookie(' jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json(token)
+                res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
+                res.status(200).json({ "token": token })
             } else {
-                res.status(400).json({ error: " your password is wrong" })
+                res.status(400).json({ error: "Your password is wrong" })
             }
         } catch (error) {
             res.status(400).json({ error: error.message })
@@ -54,7 +74,7 @@ const login = async (req, res) => {
 }
 const logout = async (req, res) => {
     try {
-        res.cookie('jwt', ""); //remove the value from our cookie.
+        res.clearCookie('jwt'); //remove the value from our cookie.
         res.status(200).json("you are logged out")
     } catch (error) {
         res.status(406).json({ error: error.messages });
@@ -83,7 +103,7 @@ const getSellerById = async (req, res) => {
 
 }
 
-const getUsers = async (_req, res) => {
+const getUsers = async (req, res) => {
     const users = await userModel.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(users)
 }
@@ -218,4 +238,4 @@ const recentSellers = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
-module.exports = { login, logout, getAdmins, addSeller, signUp, recentUsers, recentSellers, getSellers, getSellerById, getUsers, getUserById, deleteUser, deleteSeller, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, updateSeller, updateUser };
+module.exports = { login, logout, getAdmins, addSeller, signUp, recentUsers, recentSellers, getSellers, getSellerById, getUsers, getUserById, deleteUser, deleteSeller, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, updateSeller, updateUser, isLoggedIn };
