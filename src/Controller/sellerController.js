@@ -11,6 +11,9 @@ const jwt = require('jsonwebtoken');
 const path = require('path')
 const https = require('https'); // or 'https' for https:// URLs
 const fs = require('fs');
+const app = require('../config/firebaseConfig');
+const { getStorage, ref, uploadBytes } = require('firebase/storage');
+// import { getStorage, ref, uploadBytes } from "firebase/storage";
 // create json web token
 
 
@@ -34,7 +37,7 @@ const login = async (req, res) => {
             if (hahsedpassword) {
                 const token = createToken(seller.email);
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json( token)
+                res.status(200).json(token)
             } else {
                 res.status(400).json({ error: " your password is wrong" })
             }
@@ -74,111 +77,145 @@ const getSellers = async (req, res) => {
 // };
 
 
+
+// let productsCount = await Product.countDocuments({})
+// let { productName, productPrice, categoryID, position, size } = req.body
+// let sellerEmail = "jwt.verify(req.cookies.jwt, 'secret')"
+// const product = await Product.create({
+//     productID: productsCount + 1,
+//     productName: productName,
+//     productPrice: productPrice,
+//     categoryID: categoryID,
+//     sellerEmail: sellerEmail.name,
+// });
+// req.body.productID = product.productID
+// const result = await cloudinary.uploader.upload(req.files[0].path, {
+//     folder: "Models",
+//     resource_type: "auto",
+//     format: "FBX"
+// })
+// const model = await Model.create({
+//     productID: req.body.productID,
+//     position: position,
+//     modelLink: result.secure_url,
+//     size: size
+// });
+// // await addModel(req,res)
+// for (let i = 1; i < (req.files.length); i++) {
+//     // images.push(req.files[i])
+//     let result = await cloudinary.uploader.upload(req.files[i].path, {
+//         folder: "Images",
+//         resource_type: "auto",
+//         format: "PNG"
+//     })
+//     let image = await Images.create({
+//         productID: req.body.productID,
+//         imageLink: result.secure_url
+//     });
+// }
+// // await addImage(req,res)
+// res.status(200).json(product);
+
+
+
+const uploadFile = async (req, res) => {
+    try {
+        console.log(app);
+        console.log(req.body);
+        console.log(req.files);
+        const storage = getStorage(app);
+        const storageRef = ref(storage, 'Products 1/ahmed');
+        uploadBytes(storageRef, file).then((snapshot) => {
+            console.log(snapshot);
+            res.status(200).send("Upload is Successful");
+        });
+
+    } catch (err) {
+        res.status(406).json({ error: err.message });
+    }
+}
 const addProduct = async (req, res) => {
     try {
-        let productsCount = await Product.countDocuments({})
-        let { productName, productPrice, categoryID, position, size } = req.body
-        let sellerEmail = jwt.verify(req.cookies.jwt, 'secret')
-        const product = await Product.create({
-            productID: productsCount + 1,
-            productName: productName,
-            productPrice: productPrice,
-            categoryID: categoryID,
-            sellerEmail: sellerEmail.name,
-        });
-        req.body.productID = product.productID
-        const result = await cloudinary.uploader.upload(req.files[0].path, {
-            folder: "Models",
-            resource_type: "auto",
-            format: "FBX"
-        })
-        const model = await Model.create({
-            productID: req.body.productID,
-            position: position,
-            modelLink: result.secure_url,
-            size: size
-        });
-        // await addModel(req,res)
-        for (let i = 1; i < (req.files.length); i++) {
-            // images.push(req.files[i])
-            let result = await cloudinary.uploader.upload(req.files[i].path, {
-                folder: "Images",
-                resource_type: "auto",
-                format: "PNG"
-            })
-            let image = await Images.create({
-                productID: req.body.productID,
-                imageLink: result.secure_url
-            });
-        }
-        // await addImage(req,res)
-        res.status(200).json(product);
+        const product = req.body;
+        const productCreated = await Product.create(product);
+        res.status(200).json({ productCreated });
+
+
 
     }
     catch (error) {
         console.log(error);
-        res.status(406).json({ error: error.messages });
+        res.status(406).json({ error: error.message });
     }
 }
 
+const getProducts = async (req, res) => {
+    try {
+        const products = await Product.find({});
+        res.status(200).json(products);
+    }
+    catch (err) {
+        res.status(406).json({ "error": err.message })
+    }
+}
 
 const getModel = async (req, res) => {
-    try{
+    try {
         Model.findOne({ productID: req.body.productID })
-        .then(model => {
-            let modelLink = model.modelLink
-            let path = fs.createWriteStream("model" + model.productID + ".fbx");
+            .then(model => {
+                let modelLink = model.modelLink
+                let path = fs.createWriteStream("model" + model.productID + ".fbx");
 
-            https.get(modelLink, (result) => {
-                result.pipe(path);
+                https.get(modelLink, (result) => {
+                    result.pipe(path);
 
-                // after download completed close filestream
-                path.on("finish", () => {
-                    path.close();
-                    res.status(200).json("Model Downloaded");
+                    // after download completed close filestream
+                    path.on("finish", () => {
+                        path.close();
+                        res.status(200).json("Model Downloaded");
+                    });
                 });
-            });
-        })
-        .catch(err => {
-            res.status(406).json({ error: err.messages })
-        })    
+            })
+            .catch(err => {
+                res.status(406).json({ error: err.messages })
+            })
     }
-    catch (error){
+    catch (error) {
         console.log(error);
         res.status(406).json({ error: error.messages });
     }
 
 }
 const getImages = async (req, res) => {
-    try{
+    try {
         Images.find({ productID: { $in: req.body.productID } })
-        .then(images => {
-            for (let i = 0; i < images.length; i++) {
-                let imageLink = images[i].imageLink
-                let path = fs.createWriteStream("image" + i + ".png");
-                https.get(imageLink, (result) => {
-                    result.pipe(path);
+            .then(images => {
+                for (let i = 0; i < images.length; i++) {
+                    let imageLink = images[i].imageLink
+                    let path = fs.createWriteStream("image" + i + ".png");
+                    https.get(imageLink, (result) => {
+                        result.pipe(path);
 
-                    // after download completed close filestream
-                    path.on("finish", () => {
-                        path.close();
+                        // after download completed close filestream
+                        path.on("finish", () => {
+                            path.close();
+                        });
                     });
-                });
-            }
-            res.status(200).json("Images Downloaded");
-        })
-        .catch(err => {
-            res.status(406).json({ error: err.messages })
-        })
+                }
+                res.status(200).json("Images Downloaded");
+            })
+            .catch(err => {
+                res.status(406).json({ error: err.messages })
+            })
     }
-    catch(error){
+    catch (error) {
         console.log(error);
         res.status(406).json({ error: error.messages });
     }
 
 }
 const updateProduct = (req, res) => {
-     Product.findOneAndUpdate(
+    Product.findOneAndUpdate(
         { productID: req.body.id },
         {
             $set: {
@@ -206,7 +243,7 @@ const updateModel = (req, res) => {
         {
             $set: {
                 modelLink: req.body.modelLink,
-              
+
 
             },
         },
@@ -242,13 +279,13 @@ const updateImage = (req, res) => {
     );
 };
 
-const deleteProduct = (req,res)=>{
-    Product.deleteOne({_id: req.body.id})
-    .then(() => res.json({ message: "product Deleted " }))
-       .catch((err) => res.send(err));
-  }
+const deleteProduct = (req, res) => {
+    Product.deleteOne({ _id: req.body.id })
+        .then(() => res.json({ message: "product Deleted " }))
+        .catch((err) => res.send(err));
+}
 
 
-module.exports = { logout, getSellers, login, getImages, getModel, addProduct,deleteProduct,updateImage,updateModel,updateProduct };
+module.exports = { logout, getSellers, login, getImages, getModel, addProduct, uploadFile, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
 
 
