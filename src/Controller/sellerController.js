@@ -1,20 +1,15 @@
 // #Task route solution
 const sellerModel = require('../Models/seller');
-const { default: mongoose } = require('mongoose');
 const Model = require('../Models/models')
 const Images = require('../Models/images')
 const Product = require('../Models/Product')
-const cloudinary = require('../Models/cloudinary')
-const express = require("express");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
-const path = require('path')
 const https = require('https'); // or 'https' for https:// URLs
 const fs = require('fs');
 const app = require('../config/firebaseConfig');
-const { getStorage, ref, uploadBytes } = require('firebase/storage');
-// import { getStorage, ref, uploadBytes } from "firebase/storage";
-// create json web token
+const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
+const { log } = require('console');
 
 
 
@@ -60,92 +55,57 @@ const getSellers = async (req, res) => {
     const sellers = await sellerModel.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(sellers)
 }
-//admin adds seller 
-// const signUp = async (req, res) => {
-//     try {
-//         const { name, email, password } = req.body;
-//         const salt = await bcrypt.genSalt();
-//         const hashedPassword = await bcrypt.hash(password, salt);
-//         const seller = await sellerModel.create({ name: name, email: email, password: hashedPassword });
-//         const token = createToken(seller.email);
-
-//         // res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-//         res.status(200).json(seller)//The HTTP 200 OK success status response code indicates that the request has succeeded
-//     } catch (error) {
-//         res.status(400).json({ error:"user already exists with this email" })
-//     }
-// };
 
 
-
-// let productsCount = await Product.countDocuments({})
-// let { productName, productPrice, categoryID, position, size } = req.body
-// let sellerEmail = "jwt.verify(req.cookies.jwt, 'secret')"
-// const product = await Product.create({
-//     productID: productsCount + 1,
-//     productName: productName,
-//     productPrice: productPrice,
-//     categoryID: categoryID,
-//     sellerEmail: sellerEmail.name,
-// });
-// req.body.productID = product.productID
-// const result = await cloudinary.uploader.upload(req.files[0].path, {
-//     folder: "Models",
-//     resource_type: "auto",
-//     format: "FBX"
-// })
-// const model = await Model.create({
-//     productID: req.body.productID,
-//     position: position,
-//     modelLink: result.secure_url,
-//     size: size
-// });
-// // await addModel(req,res)
-// for (let i = 1; i < (req.files.length); i++) {
-//     // images.push(req.files[i])
-//     let result = await cloudinary.uploader.upload(req.files[i].path, {
-//         folder: "Images",
-//         resource_type: "auto",
-//         format: "PNG"
-//     })
-//     let image = await Images.create({
-//         productID: req.body.productID,
-//         imageLink: result.secure_url
-//     });
-// }
-// // await addImage(req,res)
-// res.status(200).json(product);
-
-
-
-const uploadFile = async (req, res) => {
+const addProduct = async (req, res) => {
+    // Pass data as form-data not in JSON
     try {
-        console.log(app);
-        console.log(req.body);
-        console.log(req.files);
-        const storage = getStorage(app);
-        const storageRef = ref(storage, 'Products 1/ahmed');
-        uploadBytes(storageRef, file).then((snapshot) => {
-            console.log(snapshot);
-            res.status(200).send("Upload is Successful");
+
+
+        const files = req.files;
+        let modelFile;
+        const images = [];
+
+        files.forEach(file => {
+            if (file.fieldname === 'model') {
+                modelFile = file;
+            }
+            else {
+                images.push(file);
+            }
         });
 
-    } catch (err) {
-        res.status(406).json({ error: err.message });
-    }
-}
-const addProduct = async (req, res) => {
-    try {
+        //res.send(req.files);
+
         const product = req.body;
-        const productCreated = await Product.create(product);
-        res.status(200).json({ productCreated });
+        const storage = getStorage(app);
+
+        const imagesPromise = images.map(async (image) => {
+
+            const storageRef = ref(storage, `${image.originalname}`);
+            const metaData = {
+                contentType: image.mimetype
+            }
+            const snapshot = await uploadBytes(storageRef, image.buffer, metaData);
+            const URL = await getDownloadURL(snapshot.ref);
+            return URL;
+        });
+        const imagesURLS = await Promise.all(imagesPromise);
+
+        const storageRef = ref(storage, `${modelFile.originalname}`);
+        const snapshot = await uploadBytes(storageRef, modelFile.buffer);
+        const modelURL = await getDownloadURL(snapshot.ref);
 
 
+        product.images = imagesURLS;
+        product.model = modelURL;
 
-    }
-    catch (error) {
-        console.log(error);
-        res.status(406).json({ error: error.message });
+        const createdProduct = await Product.create(product);
+        res.status(200).send(createdProduct);
+
+    } catch (err) {
+        console.log(err);
+        res.status(406).json({ error: err.message });
     }
 }
 
@@ -286,6 +246,6 @@ const deleteProduct = (req, res) => {
 }
 
 
-module.exports = { logout, getSellers, login, getImages, getModel, addProduct, uploadFile, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
+module.exports = { logout, getSellers, login, getImages, getModel, addProduct, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
 
 
