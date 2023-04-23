@@ -1,19 +1,15 @@
 const { Int32 } = require('mongodb');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
+const addressSchema = require('../Models/Address');
+const itemSchema = require('../Models/Item');
 const orderSchema = new Schema({
-    orderID: {
-        type: Number,
-        required: true,
-        unique: true
-    },
-    orderDate: {
-        type:Date,
+    date: {
+        type:String,
         required: true
     },
     shippingAddress:{
-        type:String,
+        type:addressSchema,
         required:true
     },
     status:{
@@ -22,6 +18,10 @@ const orderSchema = new Schema({
     },
     total:{
         type:Number,
+        required:true
+    },
+    items:{
+        type:[itemSchema],
         required:true
     },
     userEmail:{

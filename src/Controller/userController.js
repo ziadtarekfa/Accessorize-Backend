@@ -10,6 +10,7 @@ const Cart = require('../Models/Cart');
 const mongodb = require("mongodb");
 const favorites = require("../Models/Favourites");
 const Product = require('../Models/Product');
+const addressSchema = require('../Models/Address');
 
 // create json web token
 const maxAge = 3 * 24 * 60 * 60;
@@ -44,8 +45,9 @@ const login = async (req, res) => {
         return res.status(404).json({ error: "No such user" });
     } else {
         try {
-            const hahsedpassword = await bcrypt.compare(password, user.password);
-            if (hahsedpassword) {
+            const hashedpassword = await bcrypt.compare(password, user.password);
+            // let hashedpassword=password
+            if (hashedpassword) {
                 const token = createToken(user.email);
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
                 res.status(200).json(token)
@@ -104,27 +106,32 @@ const addToFavourites = async (req, res) => {
 
 
 const getTotal = async (req, res) => {
-    let IDs = req.body.item
-    let total = 0
-    let items = await Item.find({ productID: { $in: IDs } });
-    items.forEach((item) => {
-        total += item.productPrice
+    // let IDs = req.body.item
+    // let total = 0
+    // let items = await Item.find({ productID: { $in: IDs } });
+    // items.forEach((item) => {
+    //     total += item.productPrice
+    // })
+    // return total
+
+    let total=0;
+    req.body.items.forEach((item)=>{
+        total+=item.total
     })
-    return total
+    return total;
 }
 
 const makeAnOrder = async (req, res) => {
-    let ordersCount = await Order.countDocuments({})
-    let date = Date.now()
-    let userEmail = jwt.verify(req.cookies.jwt, 'secret')
+    let date = Date.now().toString()
+    let user = jwt.verify(req.cookies.jwt, 'secret')
     let total = await getTotal(req)
     let order = new Order({
-        orderID: ordersCount + 1,
-        orderDate: date,
-        shippingAddress: req.body.shippingAddress,
+        date: date,
+        shippingAddress:req.body.address,
         status: 'Pending',
         total: total,
-        userEmail: userEmail.email
+        items:req.body.items,
+        userEmail: user.email
     })
     order.save()
         .then((result) => res.status(200).json("order Saved"))

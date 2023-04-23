@@ -10,6 +10,7 @@ const fs = require('fs');
 const app = require('../config/firebaseConfig');
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
 const { log } = require('console');
+const Order = require('../Models/order');
 
 
 
@@ -174,6 +175,28 @@ const getImages = async (req, res) => {
     }
 
 }
+const getOrders = async (req, res) => {
+    try {
+        // let seller = jwt.verify(req.cookies.jwt, 'secret')
+        // let sellerEmail=seller.email
+        let sellerEmail = req.params.sellerEmail
+        const orders = await Order.find({});
+        let sellerOrders=[]
+        orders.forEach((order)=>{
+            order.items.every((item)=>{
+                if(item.sellerEmail==sellerEmail){
+                    sellerOrders.push(order)
+                    return false;
+                }
+            })
+        })
+        res.status(200).json(sellerOrders);
+    }
+    catch (err) {
+        res.status(406).json({ "error": err.message })
+    }
+}
+
 const updateProduct = (req, res) => {
     Product.findOneAndUpdate(
         { productID: req.body.id },
@@ -188,7 +211,7 @@ const updateProduct = (req, res) => {
         { new: true },
         (err, doc) => {
             if (err) {
-                res.status(406).json({ error: error.messages });
+                res.status(406).json({ error: err.messages });
             }
             else
                 res.status(200).json(doc);
@@ -210,7 +233,7 @@ const updateModel = (req, res) => {
         { new: true },
         (err, doc) => {
             if (err) {
-                res.status(406).json({ error: error.messages });
+                res.status(406).json({ error: err.messages });
             }
             else
                 res.status(200).json(doc);
@@ -230,7 +253,7 @@ const updateImage = (req, res) => {
         { new: true },
         (err, doc) => {
             if (err) {
-                res.status(406).json({ error: error.messages });
+                res.status(406).json({ error: err.messages });
             }
             else
                 res.status(200).json(doc);
@@ -246,6 +269,6 @@ const deleteProduct = (req, res) => {
 }
 
 
-module.exports = { logout, getSellers, login, getImages, getModel, addProduct, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
+module.exports = { logout, getSellers, login, getOrders,getImages, getModel, addProduct, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
 
 
