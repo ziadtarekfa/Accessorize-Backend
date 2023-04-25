@@ -9,7 +9,6 @@ const https = require('https'); // or 'https' for https:// URLs
 const fs = require('fs');
 const app = require('../config/firebaseConfig');
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
-const { log } = require('console');
 const Order = require('../Models/order');
 
 
@@ -68,23 +67,19 @@ const updateProfile = async (req, res) => {
     }
 };
 
-
-
 const getProducts = async (req, res) => {
-    // DONE FOR MAGED Mo2aqatan
     try {
-        const products = await Product.find({});
+        const products = await Product.find({ sellerEmail: req.params.sellerEmail });
         res.status(200).json(products);
     }
     catch (err) {
         res.status(406).json({ "error": err.message })
     }
 }
-
-const getProductss = async (req, res) => {
+const getProductById = async (req, res) => {
     try {
-        const products = await Product.find({ sellerEmail: req.params.sellerEmail });
-        res.status(200).json(products);
+        const product = await Product.findById(req.params.id);
+        res.status(200).json(product);
     }
     catch (err) {
         res.status(406).json({ "error": err.message })
@@ -297,6 +292,10 @@ const deleteProduct = (req, res) => {
 }
 
 
-module.exports = { logout, getSellers, login, getOrders, updateProfile, getProductss, getImages, getModel, addProduct, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
+module.exports = {
+    logout, getSellers, login, getProductById,
+    getOrders, updateProfile, getImages, getModel, addProduct,
+    deleteProduct, getProducts, updateImage, updateModel, updateProduct
+};
 
 
