@@ -57,62 +57,33 @@ const getSellers = async (req, res) => {
     res.status(200).json(sellers)
 }
 
-
-const addProduct = async (req, res) => {
-    // Pass data as form-data not in JSON
+const updateProfile = async (req, res) => {
     try {
-
-
-        const files = req.files;
-        let modelFile;
-        const images = [];
-
-        files.forEach(file => {
-            if (file.fieldname === 'model') {
-                modelFile = file;
-            }
-            else {
-                images.push(file);
-            }
-        });
-
-        //res.send(req.files);
-
-        const product = req.body;
-        const storage = getStorage(app);
-
-        const imagesPromise = images.map(async (image) => {
-
-            const storageRef = ref(storage, `${image.originalname}`);
-            const metaData = {
-                contentType: image.mimetype
-            }
-            const snapshot = await uploadBytes(storageRef, image.buffer, metaData);
-            const URL = await getDownloadURL(snapshot.ref);
-            return URL;
-        });
-        const imagesURLS = await Promise.all(imagesPromise);
-
-        const storageRef = ref(storage, `${modelFile.originalname}`);
-        const snapshot = await uploadBytes(storageRef, modelFile.buffer);
-        const modelURL = await getDownloadURL(snapshot.ref);
-
-
-        product.images = imagesURLS;
-        product.model = modelURL;
-
-        const createdProduct = await Product.create(product);
-        res.status(200).send(createdProduct);
+        const id = req.body._id;
+        const result = await sellerModel.findOneAndReplace({ _id: id }, req.body, { new: true });
+        res.status(200).json(result);
 
     } catch (err) {
-        console.log(err);
-        res.status(406).json({ error: err.message });
+        res.status(400).send({ err: "Seller Not Found" });
+    }
+};
+
+
+
+const getProducts = async (req, res) => {
+    // DONE FOR MAGED Mo2aqatan
+    try {
+        const products = await Product.find({});
+        res.status(200).json(products);
+    }
+    catch (err) {
+        res.status(406).json({ "error": err.message })
     }
 }
 
-const getProducts = async (req, res) => {
+const getProductss = async (req, res) => {
     try {
-        const products = await Product.find({});
+        const products = await Product.find({ sellerEmail: req.params.sellerEmail });
         res.status(200).json(products);
     }
     catch (err) {
@@ -181,10 +152,10 @@ const getOrders = async (req, res) => {
         // let sellerEmail=seller.email
         let sellerEmail = req.params.sellerEmail
         const orders = await Order.find({});
-        let sellerOrders=[]
-        orders.forEach((order)=>{
-            order.items.every((item)=>{
-                if(item.sellerEmail==sellerEmail){
+        let sellerOrders = []
+        orders.forEach((order) => {
+            order.items.every((item) => {
+                if (item.sellerEmail == sellerEmail) {
                     sellerOrders.push(order)
                     return false;
                 }
@@ -197,50 +168,113 @@ const getOrders = async (req, res) => {
     }
 }
 
+const addProduct = async (req, res) => {
+    // Pass data as form-data not in JSON
+    try {
+
+
+        const files = req.files;
+        let modelFile;
+        const images = [];
+
+        files.forEach(file => {
+            if (file.fieldname === 'model') {
+                modelFile = file;
+            }
+            else {
+                images.push(file);
+            }
+        });
+
+        const product = req.body;
+        const storage = getStorage(app);
+
+        const imagesPromise = images.map(async (image) => {
+
+            const storageRef = ref(storage, `${image.originalname}`);
+            const metaData = {
+                contentType: image.mimetype
+            }
+            const snapshot = await uploadBytes(storageRef, image.buffer, metaData);
+            const URL = await getDownloadURL(snapshot.ref);
+            return URL;
+        });
+        const imagesURLS = await Promise.all(imagesPromise);
+        product.images = imagesURLS;
+
+        const storageRef = ref(storage, `${modelFile.originalname}`);
+        const snapshot = await uploadBytes(storageRef, modelFile.buffer);
+        const modelURL = await getDownloadURL(snapshot.ref);
+
+
+
+        product.model = modelURL;
+
+        const createdProduct = await Product.create(product);
+        res.status(200).send(createdProduct);
+
+    } catch (err) {
+        console.log(err);
+        res.status(406).json({ error: err.message });
+    }
+}
+
+
+const updateModel = async (req, res) => {
+
+    // add the model to firebaseStorage
+    try {
+        const productId = req.params.id;
+        const model = req.file;
+        const storage = getStorage(app);
+        const storageRef = ref(storage, `Product${productId}/${model.originalname}`);
+        const snapshot = await uploadBytes(storageRef, model.buffer);
+        const modelURL = await getDownloadURL(snapshot.ref);
+        // update link in mongo
+        try {
+            const doc = await Product.findOneAndUpdate(
+                productId,
+                { model: modelURL },
+                { new: true });
+            res.status(200).send(doc);
+
+        } catch (err) {
+            res.status(404).json({ error: err.message });
+        }
+    } catch (err) {
+        res.status(404).json({ error: err.message });
+    }
+
+};
+
 const updateProduct = (req, res) => {
-    Product.findOneAndUpdate(
-        { productID: req.body.id },
-        {
-            $set: {
-                productName: req.body.name,
-                productPrice: req.body.price,
-                categoryID: req.body.category,
+    try {
+        Product.findOneAndUpdate(
+            { productID: req.body.id },
+            {
+                $set: {
+                    name: req.body.name,
+                    price: req.body.price,
+                    category: req.body.category,
 
+                },
             },
-        },
-        { new: true },
-        (err, doc) => {
-            if (err) {
-                res.status(406).json({ error: err.messages });
+            { new: true },
+            (err, doc) => {
+                if (err) {
+                    res.status(406).json({ error: err.message });
+                }
+                else
+                    res.status(200).json(doc);
             }
-            else
-                res.status(200).json(doc);
-        }
 
-    );
+        );
+    } catch (err) {
+        res.send({ error: err.message })
+    }
+
 };
 
-const updateModel = (req, res) => {
-    Model.findOneAndUpdate(
-        { productID: req.body.id },
-        {
-            $set: {
-                modelLink: req.body.modelLink,
-
-
-            },
-        },
-        { new: true },
-        (err, doc) => {
-            if (err) {
-                res.status(406).json({ error: err.messages });
-            }
-            else
-                res.status(200).json(doc);
-        }
-
-    );
-};
 
 const updateImage = (req, res) => {
     Images.findOneAndUpdate(
@@ -269,6 +303,6 @@ const deleteProduct = (req, res) => {
 }
 
 
-module.exports = { logout, getSellers, login, getOrders,getImages, getModel, addProduct, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
+module.exports = { logout, getSellers, login, getOrders, updateProfile, getProductss, getImages, getModel, addProduct, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
 
 
