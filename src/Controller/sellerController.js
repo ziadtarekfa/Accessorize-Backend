@@ -172,51 +172,68 @@ const addProduct = async (req, res) => {
     // Pass data as form-data not in JSON
     try {
 
+        // add Product to mongo and get ID
+        const createdProduct = await Product.create(req.body);
+        const productId = createdProduct._id.toString();
 
+        // get files from request
         const files = req.files;
-        let modelFile;
+        let model;
         const images = [];
-
         files.forEach(file => {
             if (file.fieldname === 'model') {
-                modelFile = file;
+                model = file;
             }
             else {
                 images.push(file);
             }
         });
 
-        const product = req.body;
-        const storage = getStorage(app);
+        // add images and model to firebase
+        const imagesURLS = await Promise.all(getImagesURL(productId, images));
+        const modelURL = await getModelURL(productId, model);
 
-        const imagesPromise = images.map(async (image) => {
-
-            const storageRef = ref(storage, `${image.originalname}`);
-            const metaData = {
-                contentType: image.mimetype
-            }
-            const snapshot = await uploadBytes(storageRef, image.buffer, metaData);
-            const URL = await getDownloadURL(snapshot.ref);
-            return URL;
-        });
-        const imagesURLS = await Promise.all(imagesPromise);
-        product.images = imagesURLS;
-
-        const storageRef = ref(storage, `${modelFile.originalname}`);
-        const snapshot = await uploadBytes(storageRef, modelFile.buffer);
-        const modelURL = await getDownloadURL(snapshot.ref);
-
-
-
-        product.model = modelURL;
-
-        const createdProduct = await Product.create(product);
-        res.status(200).send(createdProduct);
+        // update Product in mongo
+        const newProduct = await Product.findOneAndUpdate(
+            { _id: productId },
+            {
+                $set: {
+                    images: imagesURLS,
+                    model: modelURL
+                }
+            },
+            { new: true });
+        res.send(newProduct);
 
     } catch (err) {
-        console.log(err);
         res.status(406).json({ error: err.message });
     }
+}
+
+const getModelURL = async (productId, model) => {
+    try {
+        const storage = getStorage(app);
+        const storageRef = ref(storage, `Product${productId}/${model.originalname}`);
+        const snapshot = await uploadBytes(storageRef, model.buffer);
+        const modelURL = await getDownloadURL(snapshot.ref);
+        return modelURL;
+    }
+    catch (err) {
+        return err.message;
+    }
+}
+
+const getImagesURL = (productId, images) => {
+    const storage = getStorage(app);
+    return imagesPromise = images.map(async (image) => {
+        const imagesRef = ref(storage, `${image.originalname}`);
+        const metaData = {
+            contentType: image.mimetype
+        }
+        const snapshot = await uploadBytes(imagesRef, image.buffer, metaData);
+        const URL = await getDownloadURL(snapshot.ref);
+        return URL;
+    });
 }
 
 
@@ -226,17 +243,13 @@ const updateModel = async (req, res) => {
     try {
         const productId = req.params.id;
         const model = req.file;
-        const storage = getStorage(app);
-        const storageRef = ref(storage, `Product${productId}/${model.originalname}`);
-        const snapshot = await uploadBytes(storageRef, model.buffer);
-        const modelURL = await getDownloadURL(snapshot.ref);
-        // update link in mongo
+        const modelURL = await getModelURL(productId, model);
         try {
-            const doc = await Product.findOneAndUpdate(
-                productId,
+            const product = await Product.findOneAndUpdate(
+                { _id: productId },
                 { model: modelURL },
                 { new: true });
-            res.status(200).send(doc);
+            res.status(200).send(product);
 
         } catch (err) {
             res.status(404).json({ error: err.message });
@@ -249,7 +262,7 @@ const updateModel = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     try {
-        const product = await Product.findOneAndUpdate(req.params.id, req.body, { new: true });
+        const product = await Product.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
         res.status(200).json(product);
     } catch (err) {
         res.send({ error: err.message })
