@@ -17,7 +17,7 @@ router.put('/updateSeller', updateProfile)
 router.post('/deleteproduct', deleteProduct);
 router.post('/updateimage', updateImage);
 router.patch('/updatemodel/:id', upload.single('model'), updateModel);
-router.post('/updateproduct', updateProduct);
+router.patch('/updateproduct/:id', updateProduct);
 
 
 module.exports = router;

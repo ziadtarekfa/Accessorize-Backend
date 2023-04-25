@@ -247,32 +247,13 @@ const updateModel = async (req, res) => {
 
 };
 
-const updateProduct = (req, res) => {
+const updateProduct = async (req, res) => {
     try {
-        Product.findOneAndUpdate(
-            { productID: req.body.id },
-            {
-                $set: {
-                    name: req.body.name,
-                    price: req.body.price,
-                    category: req.body.category,
-
-                },
-            },
-            { new: true },
-            (err, doc) => {
-                if (err) {
-                    res.status(406).json({ error: err.message });
-                }
-                else
-                    res.status(200).json(doc);
-            }
-
-        );
+        const product = await Product.findOneAndUpdate(req.params.id, req.body, { new: true });
+        res.status(200).json(product);
     } catch (err) {
         res.send({ error: err.message })
     }
-
 };
 
 
