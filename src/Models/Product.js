@@ -36,19 +36,14 @@ const productSchema = new Schema({
     },
     model: {
         type: String,
-        required: true,
     },
     images: {
         type: mongoose.SchemaTypes.Array,
-        required: true,
     },
     description: {
         type: String,
         required: true,
     }
-
-
-
 
 }, { timestamps: true });
 

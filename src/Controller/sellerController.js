@@ -9,7 +9,6 @@ const https = require('https'); // or 'https' for https:// URLs
 const fs = require('fs');
 const app = require('../config/firebaseConfig');
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
-const { log } = require('console');
 const Order = require('../Models/order');
 
 
@@ -57,63 +56,40 @@ const getSellers = async (req, res) => {
     res.status(200).json(sellers)
 }
 
-
-const addProduct = async (req, res) => {
-    // Pass data as form-data not in JSON
+const updateProfile = async (req, res) => {
     try {
-
-
-        const files = req.files;
-        let modelFile;
-        const images = [];
-
-        files.forEach(file => {
-            if (file.fieldname === 'model') {
-                modelFile = file;
-            }
-            else {
-                images.push(file);
-            }
-        });
-
-        //res.send(req.files);
-
-        const product = req.body;
-        const storage = getStorage(app);
-
-        const imagesPromise = images.map(async (image) => {
-
-            const storageRef = ref(storage, `${image.originalname}`);
-            const metaData = {
-                contentType: image.mimetype
-            }
-            const snapshot = await uploadBytes(storageRef, image.buffer, metaData);
-            const URL = await getDownloadURL(snapshot.ref);
-            return URL;
-        });
-        const imagesURLS = await Promise.all(imagesPromise);
-
-        const storageRef = ref(storage, `${modelFile.originalname}`);
-        const snapshot = await uploadBytes(storageRef, modelFile.buffer);
-        const modelURL = await getDownloadURL(snapshot.ref);
-
-
-        product.images = imagesURLS;
-        product.model = modelURL;
-
-        const createdProduct = await Product.create(product);
-        res.status(200).send(createdProduct);
+        const result = await sellerModel.findByIdAndUpdate(req.body._id, req.body, { new: true });
+        res.status(200).json(result);
 
     } catch (err) {
-        console.log(err);
-        res.status(406).json({ error: err.message });
+        res.status(400).send({ err: "Seller Not Found" });
+    }
+};
+
+const getSellerProfile = async (req, res) => {
+    try {
+        const result = await sellerModel.findById(req.params.id);
+        res.status(200).json(result);
+
+    } catch (err) {
+        res.status(400).send({ err: "Seller Not Found" });
     }
 }
 
+
 const getProducts = async (req, res) => {
     try {
-        const products = await Product.find({});
+        const products = await Product.find({ sellerEmail: req.params.sellerEmail });
         res.status(200).json(products);
+    }
+    catch (err) {
+        res.status(406).json({ "error": err.message })
+    }
+}
+const getProductById = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        res.status(200).json(product);
     }
     catch (err) {
         res.status(406).json({ "error": err.message })
@@ -181,10 +157,10 @@ const getOrders = async (req, res) => {
         // let sellerEmail=seller.email
         let sellerEmail = req.params.sellerEmail
         const orders = await Order.find({});
-        let sellerOrders=[]
-        orders.forEach((order)=>{
-            order.items.every((item)=>{
-                if(item.sellerEmail==sellerEmail){
+        let sellerOrders = []
+        orders.forEach((order) => {
+            order.items.every((item) => {
+                if (item.sellerEmail == sellerEmail) {
                     sellerOrders.push(order)
                     return false;
                 }
@@ -197,50 +173,107 @@ const getOrders = async (req, res) => {
     }
 }
 
-const updateProduct = (req, res) => {
-    Product.findOneAndUpdate(
-        { productID: req.body.id },
-        {
-            $set: {
-                productName: req.body.name,
-                productPrice: req.body.price,
-                categoryID: req.body.category,
+const addProduct = async (req, res) => {
+    // Pass data as form-data not in JSON
+    try {
 
-            },
-        },
-        { new: true },
-        (err, doc) => {
-            if (err) {
-                res.status(406).json({ error: err.messages });
+        // add Product to mongo and get ID
+        const createdProduct = await Product.create(req.body);
+        const productId = createdProduct._id.toString();
+
+        // get files from request
+        const files = req.files;
+        let model;
+        const images = [];
+        files.forEach(file => {
+            if (file.fieldname === 'model') {
+                model = file;
             }
-            else
-                res.status(200).json(doc);
-        }
+            else {
+                images.push(file);
+            }
+        });
 
-    );
+        // add images and model to firebase
+        const imagesURLS = await Promise.all(getImagesURL(productId, images));
+        const modelURL = await getModelURL(productId, model);
+
+        // update Product in mongo
+        const newProduct = await Product.findOneAndUpdate(
+            { _id: productId },
+            {
+                $set: {
+                    images: imagesURLS,
+                    model: modelURL
+                }
+            },
+            { new: true });
+        res.send(newProduct);
+
+    } catch (err) {
+        res.status(406).json({ error: err.message });
+    }
+}
+
+const getModelURL = async (productId, model) => {
+    try {
+        const storage = getStorage(app);
+        const storageRef = ref(storage, `Product${productId}/${model.originalname}`);
+        const snapshot = await uploadBytes(storageRef, model.buffer);
+        const modelURL = await getDownloadURL(snapshot.ref);
+        return modelURL;
+    }
+    catch (err) {
+        return err.message;
+    }
+}
+
+const getImagesURL = (productId, images) => {
+    const storage = getStorage(app);
+    return imagesPromise = images.map(async (image) => {
+        const imagesRef = ref(storage, `${image.originalname}`);
+        const metaData = {
+            contentType: image.mimetype
+        }
+        const snapshot = await uploadBytes(imagesRef, image.buffer, metaData);
+        const URL = await getDownloadURL(snapshot.ref);
+        return URL;
+    });
+}
+
+
+const updateModel = async (req, res) => {
+
+    // add the model to firebaseStorage
+    try {
+        const productId = req.params.id;
+        const model = req.file;
+        const modelURL = await getModelURL(productId, model);
+        try {
+            const product = await Product.findOneAndUpdate(
+                { _id: productId },
+                { model: modelURL },
+                { new: true });
+            res.status(200).send(product);
+
+        } catch (err) {
+            res.status(404).json({ error: err.message });
+        }
+    } catch (err) {
+        res.status(404).json({ error: err.message });
+    }
+
 };
 
-const updateModel = (req, res) => {
-    Model.findOneAndUpdate(
-        { productID: req.body.id },
-        {
-            $set: {
-                modelLink: req.body.modelLink,
-
-
-            },
-        },
-        { new: true },
-        (err, doc) => {
-            if (err) {
-                res.status(406).json({ error: err.messages });
-            }
-            else
-                res.status(200).json(doc);
-        }
-
-    );
+const updateProduct = async (req, res) => {
+    try {
+        const product = await Product.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
+        res.status(200).json(product);
+    } catch (err) {
+        res.send({ error: err.message })
+    }
 };
+
 
 const updateImage = (req, res) => {
     Images.findOneAndUpdate(
@@ -269,6 +302,11 @@ const deleteProduct = (req, res) => {
 }
 
 
-module.exports = { logout, getSellers, login, getOrders,getImages, getModel, addProduct, deleteProduct, getProducts, updateImage, updateModel, updateProduct };
+module.exports = {
+    logout, getSellers, login, getProductById,
+    getOrders, updateProfile, getImages, getModel, addProduct,
+    deleteProduct, getProducts, updateImage, updateModel, updateProduct,
+    getSellerProfile
+};
 
 
