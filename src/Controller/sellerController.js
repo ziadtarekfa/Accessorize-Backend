@@ -213,12 +213,13 @@ const addProduct = async (req, res) => {
     } catch (err) {
         res.status(406).json({ error: err.message });
     }
+
 }
 
 const getModelURL = async (productId, model) => {
     try {
         const storage = getStorage(app);
-        const storageRef = ref(storage, `Product${productId}/${model.originalname}`);
+        const storageRef = ref(storage, `Products/Product${productId}/${model.originalname}`);
         const snapshot = await uploadBytes(storageRef, model.buffer);
         const modelURL = await getDownloadURL(snapshot.ref);
         return modelURL;
@@ -231,7 +232,7 @@ const getModelURL = async (productId, model) => {
 const getImagesURL = (productId, images) => {
     const storage = getStorage(app);
     return imagesPromise = images.map(async (image) => {
-        const imagesRef = ref(storage, `${image.originalname}`);
+        const imagesRef = ref(storage, `Products/Product${productId}/images/${image.originalname}`);
         const metaData = {
             contentType: image.mimetype
         }
