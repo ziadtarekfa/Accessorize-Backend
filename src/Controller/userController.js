@@ -60,7 +60,10 @@ const login = async (req, res) => {
             if (hashedpassword) {
                 const token = createToken(user.email);
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json("Login Successful")
+                const responseObj = { token, user };
+
+                res.status(200).json(responseObj);
+
             } else {
                 res.status(400).json({ error: "Incorrect Password" })
             }
