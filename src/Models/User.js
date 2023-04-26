@@ -35,7 +35,7 @@ const userSchema = new Schema({
     },
     address: {
         type: Object,
-        required: true
+        
     }
 }, { timestamps: true });
 

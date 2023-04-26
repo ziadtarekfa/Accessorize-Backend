@@ -26,15 +26,18 @@ const createToken = (email) => {
 const signUp = async (req, res) => {
     try {
         const {firstName,lastName,gender,birthDate,email,password,phoneNumber} =req.body
-        const {country,state,city,street,floorNum,aptNum,zipCode} = req.body.address
-        const address = {country,state,city,street,floorNum,aptNum,zipCode}
+        let address;
+        if(req.body.address){
+            const {country,state,city,street,floorNum,aptNum,zipCode} = req.body.address
+            address = {country,state,city,street,floorNum,aptNum,zipCode}
+        }
 
                 // const userEntered = req.body;
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(password, salt);
         // userEntered.password = hashedPassword;
 
-        const user = await userModel.create({firstName,lastName,gender,birthDate,email,hashedPassword,phoneNumber,address});
+        const user = await userModel.create({firstName,lastName,gender,birthDate,email,password:hashedPassword,phoneNumber,address});
         const token = createToken(user.email);
         res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
         res.status(200).json("user created")
