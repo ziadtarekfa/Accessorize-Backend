@@ -10,6 +10,8 @@ const Cart = require('../Models/Cart');
 const mongodb = require("mongodb");
 const favorites = require("../Models/Favourites");
 const Product = require('../Models/Product');
+const Address = require('../Models/Address');
+
 const addressSchema = require('../Models/Address');
 
 // create json web token
@@ -23,14 +25,19 @@ const createToken = (email) => {
 
 const signUp = async (req, res) => {
     try {
-        const userEntered = req.body;
+        const {firstName,lastName,gender,birthDate,email,password,phoneNumber} =req.body
+        const {country,state,city,street,floorNum,aptNum,zipCode} = req.body.address
+        const address = {country,state,city,street,floorNum,aptNum,zipCode}
+
+                // const userEntered = req.body;
         const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(userEntered.password, salt);
-        userEntered.password = hashedPassword;
-        const user = await userModel.create(userEntered);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        // userEntered.password = hashedPassword;
+
+        const user = await userModel.create({firstName,lastName,gender,birthDate,email,hashedPassword,phoneNumber,address});
         const token = createToken(user.email);
         res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-        res.status(200).json(token)
+        res.status(200).json("user created")
 
     } catch (err) {
         res.status(400).json(err.message);

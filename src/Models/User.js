@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const addressSchema = require('../Models/Address');
+const Address = require('../Models/Address');
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
@@ -33,7 +34,7 @@ const userSchema = new Schema({
         required: true
     },
     address: {
-        type: addressSchema,
+        type: Object,
         required: true
     }
 }, { timestamps: true });
