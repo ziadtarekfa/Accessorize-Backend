@@ -58,14 +58,24 @@ const getSellers = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const id = req.body._id;
-        const result = await sellerModel.findOneAndReplace({ _id: id }, req.body, { new: true });
+        const result = await sellerModel.findByIdAndUpdate(req.body._id, req.body, { new: true });
         res.status(200).json(result);
 
     } catch (err) {
         res.status(400).send({ err: "Seller Not Found" });
     }
 };
+
+const getSellerProfile = async (req, res) => {
+    try {
+        const result = await sellerModel.findById(req.params.id);
+        res.status(200).json(result);
+
+    } catch (err) {
+        res.status(400).send({ err: "Seller Not Found" });
+    }
+}
+
 
 const getProducts = async (req, res) => {
     try {
@@ -295,7 +305,8 @@ const deleteProduct = (req, res) => {
 module.exports = {
     logout, getSellers, login, getProductById,
     getOrders, updateProfile, getImages, getModel, addProduct,
-    deleteProduct, getProducts, updateImage, updateModel, updateProduct
+    deleteProduct, getProducts, updateImage, updateModel, updateProduct,
+    getSellerProfile
 };
 
 
