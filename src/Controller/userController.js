@@ -52,7 +52,7 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await userModel.findOne({ email: email });
     if (!user) {
-        return res.status(404).json({ error: "No such user" });
+        return res.status(404).json({ error: "User doesn't exist, please check the email you entered" });
     } else {
         try {
             const hashedpassword = await bcrypt.compare(password, user.password);
@@ -60,9 +60,9 @@ const login = async (req, res) => {
             if (hashedpassword) {
                 const token = createToken(user.email);
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json(token)
+                res.status(200).json("Login Successful")
             } else {
-                res.status(400).json({ error: " your password is wrong" })
+                res.status(400).json({ error: "Incorrect Password" })
             }
         } catch (error) {
             res.status(400).json({ error: error.message })
