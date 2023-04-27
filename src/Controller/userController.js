@@ -25,28 +25,11 @@ const createToken = (email) => {
 
 const signUp = async (req, res) => {
     try {
-        // mega will send email,name,phoneNo and password
-
         const user = req.body;
-
-        // const { firstName, lastName, gender, birthDate, email, password, phoneNumber } = req.body
-        // let address;
-        // if (req.body.address) {
-        //     const { country, state, city, street, floorNum, aptNum, zipCode } = req.body.address
-        //     address = { country, state, city, street, floorNum, aptNum, zipCode }
-        // }
-
-        // const userEntered = req.body;
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(req.body.password, salt);
         user.password = hashedPassword;
-        // userEntered.password = hashedPassword;
-
         const createdUser = await userModel.create(user);
-
-        // const token = createToken(user.email);
-        // res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-
         res.status(200).json(createdUser);
 
     } catch (err) {
