@@ -39,6 +39,7 @@ const signUp = async (req, res) => {
         // const userEntered = req.body;
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        user.password = hashedPassword;
         // userEntered.password = hashedPassword;
 
         const createdUser = await userModel.create(user);
@@ -46,7 +47,7 @@ const signUp = async (req, res) => {
         // const token = createToken(user.email);
         // res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
 
-        res.status(200).json("user is created");
+        res.status(200).json(createdUser);
 
     } catch (err) {
         res.status(400).json(err.message);

@@ -6,19 +6,19 @@ const Schema = mongoose.Schema;
 const userSchema = new Schema({
     firstName: {
         type: String,
-        required: true,
+        // required: true,
     },
     lastName: {
         type: String,
-        required: true,
+        // required: true,
     },
     gender: {
         type: String,
-        required: true
+        // required: true
     },
     birthDate: {
         type: String,
-        required: true
+        // required: true
     },
     email: {
         type: String,
@@ -34,8 +34,8 @@ const userSchema = new Schema({
         required: true
     },
     address: {
-        type: Object,
-        
+        type: addressSchema,
+
     }
 }, { timestamps: true });
 
