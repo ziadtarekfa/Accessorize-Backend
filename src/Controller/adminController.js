@@ -77,7 +77,7 @@ const logout = async (req, res) => {
         res.clearCookie('jwt'); //remove the value from our cookie.
         res.status(200).json("you are logged out")
     } catch (error) {
-        res.status(406).json({ error: error.messages });
+        res.status(406).json({ error: error.message });
     }
 }
 
@@ -188,19 +188,20 @@ const numberOfAdmins = async (req, res) => {
     }
 }
 
-const addSeller = async (req, res) => {
-    try {
-        const sellerEntered = req.body;
-        const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(sellerEntered.password, salt);
-        sellerEntered.password = hashedPassword;
-        const seller = await Seller.create(sellerEntered);
-        const token = createToken(seller.email);
-        res.status(200).json(token);
-    } catch (err) {
-        res.status(400).json(err.message);
-    }
-}
+// const addSeller = async (req, res) => {
+//     try {
+//         // need to check if a seller exists with that email
+//         const sellerEntered = req.body;
+//         const salt = await bcrypt.genSalt();
+//         const hashedPassword = await bcrypt.hash(sellerEntered.password, salt);
+//         sellerEntered.password = hashedPassword;
+//         const seller = await Seller.create(sellerEntered);
+//         const token = createToken(seller.email);
+//         res.status(200).json(token);
+//     } catch (err) {
+//         res.status(400).json(err.message);
+//     }
+// }
 
 const updateSeller = async (req, res) => {
     try {
@@ -238,4 +239,4 @@ const recentSellers = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
-module.exports = { login, logout, getAdmins, addSeller, signUp, recentUsers, recentSellers, getSellers, getSellerById, getUsers, getUserById, deleteUser, deleteSeller, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, updateSeller, updateUser, isLoggedIn };
+module.exports = { login, logout, getAdmins, signUp, recentUsers, recentSellers, getSellers, getSellerById, getUsers, getUserById, deleteUser, deleteSeller, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, updateSeller, updateUser, isLoggedIn };

@@ -10,6 +10,7 @@ const fs = require('fs');
 const app = require('../config/firebaseConfig');
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
 const Order = require('../Models/order');
+const Seller = require('../Models/seller');
 
 
 
@@ -28,26 +29,43 @@ const login = async (req, res) => {
         return res.status(404).json({ error: "No such seller" });
     } else {
         try {
-            const hahsedpassword = await bcrypt.compare(password, seller.password);
-            if (hahsedpassword) {
+            const hashedPassword = await bcrypt.compare(password, seller.password);
+            if (hashedPassword) {
                 const token = createToken(seller.email);
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
-                res.status(200).json(token)
+                res.status(200).json({ "token": token })
             } else {
-                res.status(400).json({ error: " your password is wrong" })
+                res.status(400).json({ error: "your password is wrong" })
             }
         } catch (error) {
             res.status(400).json({ error: error.message })
         }
     }
 }
-
-const logout = async (req, res) => {
+const signUp = async (req, res) => {
     try {
-        res.cookie('jwt', ""); //remove the value from our cookie.
+        const sellerEntered = req.body;
+        const sellerFound = await Seller.findOne({ email: sellerEntered.email });
+        if (sellerFound) {
+            throw Error('Seller already exists with the same email');
+        }
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(sellerEntered.password, salt);
+        sellerEntered.password = hashedPassword;
+        const seller = await Seller.create(sellerEntered);
+        const token = createToken(seller.email);
+        res.status(200).json(token);
+    } catch (err) {
+        res.status(404).json({ "error": err.message });
+    }
+}
+
+const logout = async (_req, res) => {
+    try {
+        res.clearCookie('jwt'); //remove the value from our cookie.
         res.status(200).json("you are logged out")
     } catch (error) {
-        res.status(406).json({ error: error.messages });
+        res.status(406).json({ error: error.message });
     }
 }
 
@@ -304,7 +322,7 @@ const deleteProduct = (req, res) => {
 
 
 module.exports = {
-    logout, getSellers, login, getProductById,
+    logout, getSellers, login, signUp, getProductById,
     getOrders, updateProfile, getImages, getModel, addProduct,
     deleteProduct, getProducts, updateImage, updateModel, updateProduct,
     getSellerProfile

@@ -1,6 +1,6 @@
 const express = require("express");
 const { logout, getSellers, login,
-    addProduct, getProductById, updateProfile,
+    addProduct, getProductById, updateProfile, signUp,
     getProducts, getImages, getModel, deleteProduct,
     updateImage, updateModel, updateProduct, getOrders, getSellerProfile } = require('../Controller/sellerController');
 const router = express.Router();
@@ -8,6 +8,7 @@ const multer = require('multer')
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/login', login)
+router.post('/signUp', signUp);
 router.get('/logout', logout);
 router.get('/sellers', getSellers);
 router.post('/addProduct', upload.any(), addProduct);
