@@ -25,19 +25,19 @@ const createToken = (email) => {
 
 const signUp = async (req, res) => {
     try {
-        const {firstName,lastName,gender,birthDate,email,password,phoneNumber} =req.body
+        const { firstName, lastName, gender, birthDate, email, password, phoneNumber } = req.body
         let address;
-        if(req.body.address){
-            const {country,state,city,street,floorNum,aptNum,zipCode} = req.body.address
-            address = {country,state,city,street,floorNum,aptNum,zipCode}
+        if (req.body.address) {
+            const { country, state, city, street, floorNum, aptNum, zipCode } = req.body.address
+            address = { country, state, city, street, floorNum, aptNum, zipCode }
         }
 
-                // const userEntered = req.body;
+        // const userEntered = req.body;
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(password, salt);
         // userEntered.password = hashedPassword;
 
-        const user = await userModel.create({firstName,lastName,gender,birthDate,email,password:hashedPassword,phoneNumber,address});
+        const user = await userModel.create({ firstName, lastName, gender, birthDate, email, password: hashedPassword, phoneNumber, address });
         const token = createToken(user.email);
         res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
         res.status(200).json("user created")
@@ -127,9 +127,9 @@ const getTotal = async (req, res) => {
     // })
     // return total
 
-    let total=0;
-    req.body.items.forEach((item)=>{
-        total+=item.total
+    let total = 0;
+    req.body.items.forEach((item) => {
+        total += item.total
     })
     return total;
 }
@@ -140,10 +140,10 @@ const makeAnOrder = async (req, res) => {
     let total = await getTotal(req)
     let order = new Order({
         date: date,
-        shippingAddress:req.body.address,
+        shippingAddress: req.body.address,
         status: 'Pending',
         total: total,
-        items:req.body.items,
+        items: req.body.items,
         userEmail: user.email
     })
     order.save()
@@ -151,9 +151,14 @@ const makeAnOrder = async (req, res) => {
         .catch((err) => res.status(400).json({ error: err }))
 }
 
-const getProducts = async (req, res) => {
-    const products = await Product.find({}).sort({ createdAt: -1 }) //descending order
-    res.status(200).json(products)
+const getProducts = async (_req, res) => {
+    try {
+        const products = await Product.find();
+        res.status(200).json(products);
+    }
+    catch (err) {
+        res.status(406).json({ "error": err.message })
+    }
 }
 
 const getCategorizedProducts = async (req, res) => {
