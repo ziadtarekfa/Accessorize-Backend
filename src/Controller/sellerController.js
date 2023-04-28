@@ -23,7 +23,6 @@ const createToken = (name) => {
 
 const login = async (req, res) => {
     const { email, password } = req.body;
-    console.log(req.body)
     const seller = await sellerModel.findOne({ email: email });
     if (!seller) {
         return res.status(404).json({ error: "No such seller" });
@@ -234,19 +233,6 @@ const addProduct = async (req, res) => {
 
 }
 
-const getModelURL = async (productId, model) => {
-    try {
-        const storage = getStorage(app);
-        const storageRef = ref(storage, `Products/Product${productId}/${model.originalname}`);
-        const snapshot = await uploadBytes(storageRef, model.buffer);
-        const modelURL = await getDownloadURL(snapshot.ref);
-        return modelURL;
-    }
-    catch (err) {
-        return err.message;
-    }
-}
-
 const getImagesURL = (productId, images) => {
     const storage = getStorage(app);
     return imagesPromise = images.map(async (image) => {
@@ -261,23 +247,30 @@ const getImagesURL = (productId, images) => {
 }
 
 
+const getModelURL = async (productId, model) => {
+    try {
+        const storage = getStorage(app);
+        const modelRef = ref(storage, `Products/Product${productId}/${model.originalname}`);
+        const snapshot = await uploadBytes(modelRef, model.buffer);
+        const modelURL = await getDownloadURL(snapshot.ref);
+        return modelURL;
+    }
+    catch (err) {
+        return err.message;
+    }
+}
+
 const updateModel = async (req, res) => {
 
     // add the model to firebaseStorage
     try {
-        const productId = req.params.id;
-        const model = req.file;
-        const modelURL = await getModelURL(productId, model);
-        try {
-            const product = await Product.findOneAndUpdate(
-                { _id: productId },
-                { model: modelURL },
-                { new: true });
-            res.status(200).send(product);
 
-        } catch (err) {
-            res.status(404).json({ error: err.message });
-        }
+        const productId = req.params.id;
+        const model = req.files[0];
+        console.log(model);
+        const modelURL = await getModelURL(productId, model);
+        res.status(200).json(modelURL);
+
     } catch (err) {
         res.status(404).json({ error: err.message });
     }
@@ -286,6 +279,7 @@ const updateModel = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     try {
+        console.log(req.body);
         const product = await Product.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
         res.status(200).json(product);
     } catch (err) {

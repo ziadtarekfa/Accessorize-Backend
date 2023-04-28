@@ -21,8 +21,8 @@ router.put('/updateProfile', updateProfile);
 router.get('/getSellerProfile/:id', getSellerProfile);
 router.post('/deleteproduct', deleteProduct);
 router.post('/updateimage', updateImage);
-router.patch('/updatemodel/:id', upload.single('model'), updateModel);
-router.patch('/updateproduct/:id', updateProduct);
+router.patch('/updatemodel/:id', upload.any(), updateModel);
+router.patch('/updateproduct/:id', upload.any(), updateProduct);
 
 
 module.exports = router;

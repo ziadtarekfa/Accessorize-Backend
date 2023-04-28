@@ -34,7 +34,7 @@ const signUp = async (req, res) => {
 }
 const isLoggedIn = (req, res) => {
     try {
-        console.log(req.cookies)
+        // console.log(req.cookies)
         if (!req.cookies.jwt) {
             res.status(401).send({ err: "You are not logged in" })
         }
