@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const modelPositionAndSizeSchema = require('./ModelPositionAndSize');
 const Schema = mongoose.Schema;
 
 const productSchema = new Schema({
@@ -34,7 +35,7 @@ const productSchema = new Schema({
         type: String,
         required: true,
     },
-    model: {
+    modelLink: {
         type: String,
     },
     images: {
@@ -43,9 +44,30 @@ const productSchema = new Schema({
     description: {
         type: String,
         required: true,
+    },
+    modelPosition: {
+        type: modelPositionAndSizeSchema,
+        required: true
+    },
+    modelSize: {
+        type: modelPositionAndSizeSchema,
+        required: true
+    },
+    rate: {
+        type: Number,
+    },
+    isTried: {
+        type: Boolean,
+    },
+    isFavourite: {
+        type: Boolean
+    },
+    isCart: {
+        type: Boolean
     }
 
-}, { timestamps: true });
+
+});
 
 const Product = mongoose.model('Product', productSchema);
 module.exports = Product;

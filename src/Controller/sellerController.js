@@ -195,6 +195,7 @@ const addProduct = async (req, res) => {
     try {
 
         // add Product to mongo and get ID
+
         const createdProduct = await Product.create(req.body);
         const productId = createdProduct._id.toString();
 
@@ -221,7 +222,7 @@ const addProduct = async (req, res) => {
             {
                 $set: {
                     images: imagesURLS,
-                    model: modelURL
+                    modelLink: modelURL
                 }
             },
             { new: true });
