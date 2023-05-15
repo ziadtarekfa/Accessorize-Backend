@@ -56,6 +56,9 @@ The user module caters to the needs of individuals who browse and purchase acces
 - Search for products 
 - Login and Register
 
+### User Interface Design 
+the app has an ui design and here is the link for it : https://www.figma.com/file/H5vnl8R6Vu1XHIjHhraYvQ/Ar-Accessories?type=design&node-id=0%3A1&t=tybvDr1a9rEjtsxH-1
+
 ## Getting Started
 
 To get started with the Acessorize backend, follow these steps:
