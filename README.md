@@ -28,7 +28,7 @@ The backend is divided into three main modules:
 - Admin 
 - Seller  
 - User
-Each module focuses on different operations and functionalities. Here's a brief overview of each module:
+- Each module focuses on different operations and functionalities. Here's a brief overview of each module:
 
 ### 1. Admin
 
