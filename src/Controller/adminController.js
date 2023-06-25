@@ -1,16 +1,11 @@
-// #Task route solution
 const adminModel = require('../Models/Admin');
 const Seller = require('../Models/seller');
 const userModel = require('../Models/User');
-const { default: mongoose } = require('mongoose');
-const express = require("express");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 const sellerModel = require('../Models/seller');
-const Item = require('../Models/Product');
 
 
-// create json web token
 const maxAge = 3 * 24 * 60 * 60;
 const createToken = (name) => {
     return jwt.sign({ name }, 'secret', {
@@ -27,19 +22,18 @@ const signUp = async (req, res) => {
         const token = createToken(admin.name);
 
         res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-        res.status(200).json(admin)//The HTTP 200 OK success status response code indicates that the request has succeeded
+        res.status(200).json(admin)
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
 }
 const isLoggedIn = (req, res) => {
     try {
-        // console.log(req.cookies)
         if (!req.cookies.jwt) {
             res.status(401).send({ err: "You are not logged in" })
         }
         else {
-            jwt.verify(req.cookies.jwt, 'secret', function (err, decoded) {
+            jwt.verify(req.cookies.jwt, 'secret', function (err, _decoded) {
                 if (err) {
                     res.status(401).send({ err: err.message });
                 }
@@ -72,9 +66,9 @@ const login = async (req, res) => {
         }
     }
 }
-const logout = async (req, res) => {
+const logout = async (_req, res) => {
     try {
-        res.clearCookie('jwt'); //remove the value from our cookie.
+        res.clearCookie('jwt');
         res.status(200).json("you are logged out")
     } catch (error) {
         res.status(406).json({ error: error.message });
@@ -82,12 +76,7 @@ const logout = async (req, res) => {
 }
 
 
-const getAdmins = async (req, res) => {
-    const users = await adminModel.find({}).sort({ createdAt: -1 }) //descending order
-    res.status(200).json(users)
-}
-
-const getSellers = async (req, res) => {
+const getSellers = async (_req, res) => {
     const sellers = await Seller.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(sellers)
 }
@@ -103,7 +92,7 @@ const getSellerById = async (req, res) => {
 
 }
 
-const getUsers = async (req, res) => {
+const getUsers = async (_req, res) => {
     const users = await userModel.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(users)
 }
@@ -133,6 +122,7 @@ const deleteUser = (req, res) => {
     }
 
 }
+
 const deleteSeller = (req, res) => {
     if (req.body.email == null) {
         res.status(200).json("Please enter the seller's email")
@@ -146,21 +136,8 @@ const deleteSeller = (req, res) => {
             .catch((err) => res.status(400).send(err));
     }
 }
-const deleteAdmin = (req, res) => {
-    if (req.body.email == null) {
-        res.status(200).json("Please enter the admin's email")
-    }
-    else {
-        adminModel.findOneAndDelete({ email: req.body.email })
-            .then((admin) => {
-                if (admin) res.status(200).json("Admin deleted")
-                else res.status(200).json("Admin not found")
-            })
-            .catch((err) => res.status(400).send(err));
-    }
-}
 
-const numberOfUsers = async (req, res) => {
+const numberOfUsers = async (_req, res) => {
     try {
         let usersCount = await userModel.countDocuments({})
         res.status(200).json({ usersCount })
@@ -169,7 +146,8 @@ const numberOfUsers = async (req, res) => {
         res.status(400).json(err)
     }
 }
-const numberOfSellers = async (req, res) => {
+
+const numberOfSellers = async (_req, res) => {
     try {
         let sellersCount = await sellerModel.countDocuments({})
         res.status(200).json({ sellersCount })
@@ -178,30 +156,6 @@ const numberOfSellers = async (req, res) => {
         res.status(400).json(err)
     }
 }
-const numberOfAdmins = async (req, res) => {
-    try {
-        let adminsCount = await adminModel.countDocuments({})
-        res.status(200).json({ adminsCount })
-    }
-    catch (error) {
-        res.status(400).json(err)
-    }
-}
-
-// const addSeller = async (req, res) => {
-//     try {
-//         // need to check if a seller exists with that email
-//         const sellerEntered = req.body;
-//         const salt = await bcrypt.genSalt();
-//         const hashedPassword = await bcrypt.hash(sellerEntered.password, salt);
-//         sellerEntered.password = hashedPassword;
-//         const seller = await Seller.create(sellerEntered);
-//         const token = createToken(seller.email);
-//         res.status(200).json(token);
-//     } catch (err) {
-//         res.status(400).json(err.message);
-//     }
-// }
 
 const updateSeller = async (req, res) => {
     try {
@@ -213,6 +167,7 @@ const updateSeller = async (req, res) => {
         res.status(400).send({ err: "Seller Not Found" });
     }
 };
+
 const updateUser = async (req, res) => {
     try {
         const id = req.body._id;
@@ -223,7 +178,8 @@ const updateUser = async (req, res) => {
         res.status(400).send({ err: "User Not Found" });
     }
 };
-const recentUsers = async (req, res) => {
+
+const recentUsers = async (_req, res) => {
     try {
         let users = await userModel.find({ createdAt: { $gte: new Date((new Date().getTime() - (2 * 24 * 60 * 60 * 1000))) } });
         res.status(200).json(users.length)
@@ -231,7 +187,8 @@ const recentUsers = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
-const recentSellers = async (req, res) => {
+
+const recentSellers = async (_req, res) => {
     try {
         let sellers = await Seller.find({ createdAt: { $gte: new Date((new Date().getTime() - (2 * 24 * 60 * 60 * 1000))) } });
         res.status(200).json(sellers.length)
@@ -239,4 +196,5 @@ const recentSellers = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
-module.exports = { login, logout, getAdmins, signUp, recentUsers, recentSellers, getSellers, getSellerById, getUsers, getUserById, deleteUser, deleteSeller, deleteAdmin, numberOfUsers, numberOfAdmins, numberOfSellers, updateSeller, updateUser, isLoggedIn };
+
+module.exports = { login, logout, signUp, recentUsers, recentSellers, getSellers, getSellerById, getUsers, getUserById, deleteUser, deleteSeller, numberOfUsers, numberOfSellers, updateSeller, updateUser, isLoggedIn };
