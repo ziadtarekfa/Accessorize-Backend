@@ -50,16 +50,16 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     const admin = await adminModel.findOne({ email: email });
     if (!admin) {
-        return res.status(404).json({ error: "No such admin" });
+        return res.status(404).json({ error: "Account does not exist !" });
     } else {
         try {
-            const hahsedpassword = await bcrypt.compare(password, admin.password);
-            if (hahsedpassword) {
+            const hashedPassword = await bcrypt.compare(password, admin.password);
+            if (hashedPassword) {
                 const token = createToken(admin.email);
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
                 res.status(200).json({ "token": token })
             } else {
-                res.status(400).json({ error: "Your password is wrong" })
+                res.status(400).json({ error: "Incorrect password !" })
             }
         } catch (error) {
             res.status(400).json({ error: error.message })
@@ -116,7 +116,7 @@ const deleteUser = (req, res) => {
         userModel.findOneAndDelete({ email: req.body.email })
             .then((user) => {
                 if (user) res.status(200).json("User deleted")
-                else res.status(200).json("User not found")
+                else res.status(400).json("User not found")
             })
             .catch((err) => res.status(400).send(err));
     }
@@ -131,7 +131,7 @@ const deleteSeller = (req, res) => {
         sellerModel.findOneAndDelete({ email: req.body.email })
             .then((seller) => {
                 if (seller) res.status(200).json("Seller deleted")
-                else res.status(200).json("Seller not found")
+                else res.status(400).json("Seller not found")
             })
             .catch((err) => res.status(400).send(err));
     }

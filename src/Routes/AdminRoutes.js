@@ -15,7 +15,7 @@ router.get('/sellerId/:id', getSellerById);
 router.get('/userId/:id', getUserById);
 router.get('/recentUsers', recentUsers);
 router.get('/recentSellers', recentSellers);
-router.get('/users', getUsers);
+router.get('/customers', getUsers);
 router.get('/usersCount', numberOfUsers);
 router.get('/sellersCount', numberOfSellers);
 router.delete('/deleteUser', deleteUser);
