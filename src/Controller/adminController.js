@@ -1,9 +1,8 @@
 const adminModel = require('../Models/Admin');
-const Seller = require('../Models/seller');
+const Seller = require('../Models/Seller');
 const userModel = require('../Models/User');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
-const sellerModel = require('../Models/seller');
 
 
 const maxAge = 3 * 24 * 60 * 60;
@@ -128,7 +127,7 @@ const deleteSeller = (req, res) => {
         res.status(200).json("Please enter the seller's email")
     }
     else {
-        sellerModel.findOneAndDelete({ email: req.body.email })
+        Seller.findOneAndDelete({ email: req.body.email })
             .then((seller) => {
                 if (seller) res.status(200).json("Seller deleted")
                 else res.status(400).json("Seller not found")
@@ -149,7 +148,7 @@ const numberOfUsers = async (_req, res) => {
 
 const numberOfSellers = async (_req, res) => {
     try {
-        let sellersCount = await sellerModel.countDocuments({})
+        let sellersCount = await Seller.countDocuments({})
         res.status(200).json({ sellersCount })
     }
     catch (error) {
@@ -160,7 +159,7 @@ const numberOfSellers = async (_req, res) => {
 const updateSeller = async (req, res) => {
     try {
         const id = req.body._id;
-        const result = await sellerModel.findOneAndReplace({ _id: id }, req.body, { new: true });
+        const result = await Seller.findOneAndReplace({ _id: id }, req.body, { new: true });
         res.status(200).json(result);
 
     } catch (err) {

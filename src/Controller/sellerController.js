@@ -1,16 +1,14 @@
-// #Task route solution
-const sellerModel = require('../Models/seller');
 const Model = require('../Models/models')
 const Images = require('../Models/images')
 const Product = require('../Models/Product')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
-const https = require('https'); // or 'https' for https:// URLs
+const https = require('https');
 const fs = require('fs');
 const app = require('../config/firebaseConfig');
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
 const Order = require('../Models/order');
-const Seller = require('../Models/seller');
+const Seller = require('../Models/Seller');
 
 
 
@@ -23,9 +21,9 @@ const createToken = (name) => {
 
 const login = async (req, res) => {
     const { email, password } = req.body;
-    const seller = await sellerModel.findOne({ email: email });
+    const seller = await Seller.findOne({ email: email });
     if (!seller) {
-        return res.status(404).json({ error: "No such seller" });
+        return res.status(404).json({ error: "Seller not found !" });
     } else {
         try {
             const hashedPassword = await bcrypt.compare(password, seller.password);
@@ -34,7 +32,7 @@ const login = async (req, res) => {
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
                 res.status(200).json({ "token": token })
             } else {
-                res.status(400).json({ error: "your password is wrong" })
+                res.status(400).json({ error: "Incorrect password !" });
             }
         } catch (error) {
             res.status(400).json({ error: error.message })
@@ -44,10 +42,6 @@ const login = async (req, res) => {
 const signUp = async (req, res) => {
     try {
         const sellerEntered = req.body;
-        const sellerFound = await Seller.findOne({ email: sellerEntered.email });
-        if (sellerFound) {
-            throw Error('Seller already exists with the same email');
-        }
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(sellerEntered.password, salt);
         sellerEntered.password = hashedPassword;
@@ -55,7 +49,7 @@ const signUp = async (req, res) => {
         const token = createToken(seller.email);
         res.status(200).json(token);
     } catch (err) {
-        res.status(404).json({ "error": err.message });
+        res.status(404).json({ error: err.message });
     }
 }
 
@@ -69,13 +63,13 @@ const logout = async (_req, res) => {
 }
 
 const getSellers = async (req, res) => {
-    const sellers = await sellerModel.find({}).sort({ createdAt: -1 }) //descending order
+    const sellers = await Seller.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(sellers)
 }
 
 const updateProfile = async (req, res) => {
     try {
-        const result = await sellerModel.findByIdAndUpdate(req.body._id, req.body, { new: true });
+        const result = await Seller.findByIdAndUpdate(req.body._id, req.body, { new: true });
         res.status(200).json(result);
 
     } catch (err) {
@@ -85,7 +79,7 @@ const updateProfile = async (req, res) => {
 
 const getSellerProfile = async (req, res) => {
     try {
-        const result = await sellerModel.findById(req.params.id);
+        const result = await Seller.findById(req.params.id);
         res.status(200).json(result);
 
     } catch (err) {
@@ -95,14 +89,22 @@ const getSellerProfile = async (req, res) => {
 
 
 const getProducts = async (req, res) => {
-    try {
-        const products = await Product.find({ sellerEmail: req.params.sellerEmail });
-        res.status(200).json(products);
-    }
-    catch (err) {
-        res.status(406).json({ "error": err.message })
-    }
+    const myCookie = req.cookies.jwt;
+    const bearerToken = req.headers.authorization;
+
+    console.log(myCookie);
+    console.log(bearerToken);
+    //     try {
+    //         const products = await Product.find({ sellerEmail: req.params.sellerEmail });
+    //         res.status(200).json(products);
+    //     }
+    //     catch (err) {
+    //         res.status(406).json({ "error": err.message })
+    //     }
+    // }
+
 }
+
 const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -195,7 +197,6 @@ const addProduct = async (req, res) => {
     try {
 
         // add Product to mongo and get ID
-
         const createdProduct = await Product.create(req.body);
         const productId = createdProduct._id.toString();
 
@@ -265,7 +266,6 @@ const updateModel = async (req, res) => {
 
     // add the model to firebaseStorage
     try {
-
         const productId = req.params.id;
         const model = req.files[0];
         console.log(model);

@@ -8,7 +8,7 @@ const multer = require('multer')
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/login', login)
-router.post('/signUp', signUp);
+router.post('/register', signUp);
 router.get('/logout', logout);
 router.get('/sellers', getSellers);
 router.post('/addProduct', upload.any(), addProduct);

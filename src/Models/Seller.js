@@ -34,7 +34,6 @@ const sellerSchema = new Schema({
   },
   address: {
     type: addressSchema,
-    // required: true
   }
 
 }, { timestamps: true });
