@@ -9,12 +9,13 @@ const app = require('../config/firebaseConfig');
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
 const Order = require('../Models/order');
 const Seller = require('../Models/Seller');
+const userModel = require('../Models/User');
 
 
 
 const maxAge = 3 * 24 * 60 * 60;
-const createToken = (name) => {
-    return jwt.sign({ name }, 'secret', {
+const createToken = (email) => {
+    return jwt.sign({ email }, 'secret', {
         expiresIn: maxAge
     });
 };
@@ -72,46 +73,47 @@ const updateProfile = async (req, res) => {
         const result = await Seller.findByIdAndUpdate(req.body._id, req.body, { new: true });
         res.status(200).json(result);
 
-    } catch (err) {
-        res.status(400).send({ err: "Seller Not Found" });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 };
 
-const getSellerProfile = async (req, res) => {
+const getProfile = async (req, res) => {
     try {
-        const result = await Seller.findById(req.params.id);
+
+        const token = req.cookies.jwt;
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        const result = await Seller.findOne({ email: payload.email });
         res.status(200).json(result);
 
-    } catch (err) {
-        res.status(400).send({ err: "Seller Not Found" });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 }
 
 
 const getProducts = async (req, res) => {
-    const myCookie = req.cookies.jwt;
-    const bearerToken = req.headers.authorization;
+    const token = req.cookies.jwt;
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 
-    console.log(myCookie);
-    console.log(bearerToken);
-    //     try {
-    //         const products = await Product.find({ sellerEmail: req.params.sellerEmail });
-    //         res.status(200).json(products);
-    //     }
-    //     catch (err) {
-    //         res.status(406).json({ "error": err.message })
-    //     }
-    // }
-
+    try {
+        const products = await Product.find({ sellerEmail: payload.email });
+        res.status(200).json(products);
+    }
+    catch (err) {
+        res.status(406).json({ error: err.message })
+    }
 }
+
+
 
 const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
         res.status(200).json(product);
     }
-    catch (err) {
-        res.status(406).json({ "error": err.message })
+    catch (error) {
+        res.status(406).json({ "error": error.message })
     }
 }
 
@@ -133,7 +135,7 @@ const getModel = async (req, res) => {
                 });
             })
             .catch(err => {
-                res.status(406).json({ error: err.messages })
+                res.status(406).json({ error: err.message })
             })
     }
     catch (error) {
@@ -166,36 +168,60 @@ const getImages = async (req, res) => {
     }
     catch (error) {
         console.log(error);
-        res.status(406).json({ error: error.messages });
+        res.status(406).json({ error: error.message });
     }
 
 }
+const getUserByEmail = async (req, res) => {
+    try {
+        const emailInput = req.params['email'];
+        const user = await userModel.findOne({ email: emailInput }) //descending order
+        res.status(200).json(user)
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
 const getOrders = async (req, res) => {
     try {
-        // let seller = jwt.verify(req.cookies.jwt, 'secret')
-        // let sellerEmail=seller.email
-        let sellerEmail = req.params.sellerEmail
+        const token = req.cookies.jwt;
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+
         const orders = await Order.find({});
-        let sellerOrders = []
         orders.forEach((order) => {
-            order.items.every((item) => {
-                if (item.sellerEmail == sellerEmail) {
-                    sellerOrders.push(order)
-                    return false;
-                }
-            })
+            order.items = order.items.filter((item) => {
+                return item.sellerEmail === payload.email;
+            });
         })
-        res.status(200).json(sellerOrders);
+        res.status(200).json(orders);
     }
-    catch (err) {
-        res.status(406).json({ "error": err.message })
+    catch (error) {
+        res.status(406).json({ error: error.message })
+    }
+}
+const getOrderById = async (req, res) => {
+    try {
+        const token = req.cookies.jwt;
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        const order = await Order.findOne({ _id: req.params.id });
+        order.items = order.items.filter((item) => {
+            return item.sellerEmail === payload.email;
+        });
+
+        res.status(200).json(order);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 }
 
 const addProduct = async (req, res) => {
     // Pass data as form-data not in JSON
     try {
+        const token = req.cookies.jwt;
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 
+        req.body.sellerEmail = payload.email;
         // add Product to mongo and get ID
         const createdProduct = await Product.create(req.body);
         const productId = createdProduct._id.toString();
@@ -229,8 +255,8 @@ const addProduct = async (req, res) => {
             { new: true });
         res.send(newProduct);
 
-    } catch (err) {
-        res.status(406).json({ error: err.message });
+    } catch (error) {
+        res.status(406).json({ error: error.message });
     }
 
 }
@@ -280,11 +306,10 @@ const updateModel = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     try {
-        console.log(req.body);
         const product = await Product.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
         res.status(200).json(product);
     } catch (err) {
-        res.send({ error: err.message })
+        res.status(400).json({ error: err.message })
     }
 };
 
@@ -318,9 +343,9 @@ const deleteProduct = (req, res) => {
 
 module.exports = {
     logout, getSellers, login, signUp, getProductById,
-    getOrders, updateProfile, getImages, getModel, addProduct,
+    getOrders, getOrderById, updateProfile, getImages, getModel, addProduct,
     deleteProduct, getProducts, updateImage, updateModel, updateProduct,
-    getSellerProfile
+    getProfile, getUserByEmail
 };
 
 
