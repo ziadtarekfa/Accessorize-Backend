@@ -109,7 +109,12 @@ const getProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
     try {
+        const token = req.cookies.jwt;
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
         const product = await Product.findById(req.params.id);
+        if (product == null || product.sellerEmail !== payload.email) {
+            throw Error("Product is not available");
+        }
         res.status(200).json(product);
     }
     catch (error) {
