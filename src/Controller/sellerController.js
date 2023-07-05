@@ -1,10 +1,6 @@
-const Model = require('../Models/models')
-const Images = require('../Models/images')
 const Product = require('../Models/Product')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
-const https = require('https');
-const fs = require('fs');
 const app = require('../config/firebaseConfig');
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
 const Order = require('../Models/order');
@@ -63,11 +59,6 @@ const logout = async (_req, res) => {
     }
 }
 
-const getSellers = async (req, res) => {
-    const sellers = await Seller.find({}).sort({ createdAt: -1 }) //descending order
-    res.status(200).json(sellers)
-}
-
 const updateProfile = async (req, res) => {
     try {
         const result = await Seller.findByIdAndUpdate(req.body._id, req.body, { new: true });
@@ -105,8 +96,6 @@ const getProducts = async (req, res) => {
     }
 }
 
-
-
 const getProductById = async (req, res) => {
     try {
         const token = req.cookies.jwt;
@@ -122,61 +111,7 @@ const getProductById = async (req, res) => {
     }
 }
 
-const getModel = async (req, res) => {
-    try {
-        Model.findOne({ productID: req.body.productID })
-            .then(model => {
-                let modelLink = model.modelLink
-                let path = fs.createWriteStream("model" + model.productID + ".fbx");
 
-                https.get(modelLink, (result) => {
-                    result.pipe(path);
-
-                    // after download completed close filestream
-                    path.on("finish", () => {
-                        path.close();
-                        res.status(200).json("Model Downloaded");
-                    });
-                });
-            })
-            .catch(err => {
-                res.status(406).json({ error: err.message })
-            })
-    }
-    catch (error) {
-        console.log(error);
-        res.status(406).json({ error: error.messages });
-    }
-
-}
-const getImages = async (req, res) => {
-    try {
-        Images.find({ productID: { $in: req.body.productID } })
-            .then(images => {
-                for (let i = 0; i < images.length; i++) {
-                    let imageLink = images[i].imageLink
-                    let path = fs.createWriteStream("image" + i + ".png");
-                    https.get(imageLink, (result) => {
-                        result.pipe(path);
-
-                        // after download completed close filestream
-                        path.on("finish", () => {
-                            path.close();
-                        });
-                    });
-                }
-                res.status(200).json("Images Downloaded");
-            })
-            .catch(err => {
-                res.status(406).json({ error: err.messages })
-            })
-    }
-    catch (error) {
-        console.log(error);
-        res.status(406).json({ error: error.message });
-    }
-
-}
 const getUserByEmail = async (req, res) => {
     try {
         const emailInput = req.params['email'];
@@ -299,7 +234,6 @@ const updateModel = async (req, res) => {
     try {
         const productId = req.params.id;
         const model = req.files[0];
-        console.log(model);
         const modelURL = await getModelURL(productId, model);
         res.status(200).json(modelURL);
 
@@ -319,26 +253,6 @@ const updateProduct = async (req, res) => {
 };
 
 
-const updateImage = (req, res) => {
-    Images.findOneAndUpdate(
-        { productID: req.body.id },
-        {
-            $set: {
-                imageLink: req.body.imageLink,
-            },
-        },
-        { new: true },
-        (err, doc) => {
-            if (err) {
-                res.status(406).json({ error: err.messages });
-            }
-            else
-                res.status(200).json(doc);
-        }
-
-    );
-};
-
 const deleteProduct = (req, res) => {
     Product.deleteOne({ _id: req.body.id })
         .then(() => res.json({ message: "product Deleted " }))
@@ -347,9 +261,9 @@ const deleteProduct = (req, res) => {
 
 
 module.exports = {
-    logout, getSellers, login, signUp, getProductById,
-    getOrders, getOrderById, updateProfile, getImages, getModel, addProduct,
-    deleteProduct, getProducts, updateImage, updateModel, updateProduct,
+    logout, login, signUp, getProductById,
+    getOrders, getOrderById, updateProfile, addProduct,
+    deleteProduct, getProducts, updateModel, updateProduct,
     getProfile, getUserByEmail
 };
 
