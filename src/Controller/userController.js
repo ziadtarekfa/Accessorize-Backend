@@ -1,18 +1,11 @@
 // #Task route solution
 const userModel = require('../Models/User');
-const { default: mongoose } = require('mongoose');
-const express = require("express");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 const Item = require('../Models/Product');
 const Order = require('../Models/order')
-const Cart = require('../Models/Cart');
-const mongodb = require("mongodb");
 const favorites = require("../Models/Favourites");
 const Product = require('../Models/Product');
-const Address = require('../Models/Address');
-
-const addressSchema = require('../Models/Address');
 
 // create json web token
 const maxAge = 3 * 24 * 60 * 60;
@@ -46,7 +39,6 @@ const login = async (req, res) => {
     } else {
         try {
             const hashedpassword = await bcrypt.compare(password, user.password);
-            // let hashedpassword=password
             if (hashedpassword) {
                 const token = createToken(user.email);
                 res.cookie('jwt', token, { httponly: true, maxAge: maxAge * 1000 });
@@ -64,7 +56,7 @@ const login = async (req, res) => {
 }
 
 
-const logout = async (req, res) => {
+const logout = async (_req, res) => {
     try {
         res.cookie('jwt', ""); //remove the value from our cookie.
         res.status(200).json("you are logged out")
@@ -74,7 +66,7 @@ const logout = async (req, res) => {
 }
 
 
-const getUsers = async (req, res) => {
+const getUsers = async (_req, res) => {
     const users = await userModel.find({}).sort({ createdAt: -1 }) //descending order
     res.status(200).json(users)
 }
@@ -108,15 +100,7 @@ const addToFavourites = async (req, res) => {
 }
 
 
-const getTotal = async (req, res) => {
-    // let IDs = req.body.item
-    // let total = 0
-    // let items = await Item.find({ productID: { $in: IDs } });
-    // items.forEach((item) => {
-    //     total += item.productPrice
-    // })
-    // return total
-
+const getTotal = async (req, _res) => {
     let total = 0;
     req.body.items.forEach((item) => {
         total += item.total

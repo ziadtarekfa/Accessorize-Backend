@@ -1,4 +1,3 @@
-// External variables
 const express = require("express");
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -6,18 +5,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
 
-
-
-// functionality of require is that it reads a JavaScript file, executes the file, and then proceeds to return the exports object
-
-//require('dotenv').config() // 3mlt initialization ll .env bs
-const { requireAuth } = require('./Middleware/authMiddleware');
-
-
-
-//Db
 const MongoURI = 'mongodb+srv://SixAnts:SixAnts_6@cluster0.ipncqd2.mongodb.net/test';
-
 
 //App variables
 const app = express();
@@ -25,7 +13,6 @@ const port = process.env.PORT || "8000";
 const UserRoutes = require('./Routes/UserRoutes');
 const SellerRoutes = require('./Routes/SellerRoutes');
 const AdminRoutes = require('./Routes/AdminRoutes');
-
 
 
 // configurations
@@ -47,6 +34,7 @@ mongoose.connect(MongoURI)
     })
   })
   .catch(err => console.log(err));
+
 app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(express.json())

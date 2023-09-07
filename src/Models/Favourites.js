@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const {ObjectId} = mongoose.Schema;
 
 const favouritesSchema = new Schema({
     productID: {
@@ -8,10 +7,10 @@ const favouritesSchema = new Schema({
         required: true
     },
     userEmail: {
-        type:String,
+        type: String,
         required: true
     },
-}, {timestamps:true});
+}, { timestamps: true });
 
-const Favourites= mongoose.model('Favourite',favouritesSchema);
+const Favourites = mongoose.model('Favourite', favouritesSchema);
 module.exports = Favourites;
